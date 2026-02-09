@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>DayZ Types Editor</title>
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Outfit:wght@400;500;600&display=swap" rel="stylesheet">
+	<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+	<div class="app">
+		<header class="header">
+			<h1>DayZ Types Editor</h1>
+			<p class="subtitle">Настройка и валидация types.xml</p>
+			<div class="toolbar">
+				<label class="btn btn-secondary">
+					<input type="file" id="fileInput" accept=".xml" hidden> Загрузить XML
+				</label>
+				<label class="btn btn-outline disabled" id="importXmlLabel" title="Сначала загрузите основной файл">
+					<input type="file" id="importXmlInput" accept=".xml" hidden> Добавить из XML
+				</label>
+				<button type="button" id="exportBtn" class="btn btn-primary" disabled>Скачать types.xml</button>
+				<button type="button" id="validateBtn" class="btn btn-outline">Валидация</button>
+				<button type="button" id="duplicatesBtn" class="btn btn-outline" disabled>Поиск дубликатов</button>
+				<button type="button" id="massAddOpenBtn" class="btn btn-outline">Массовое добавление</button>
+				<button type="button" id="addSingleTypeBtn" class="btn btn-outline">Добавить предмет</button>
+				<span class="toolbar-sep"></span>
+				<input type="text" id="searchInput" class="toolbar-input" placeholder="Поиск по type name..." autocomplete="off">
+				<select id="categoryFilter" class="toolbar-select">
+					<option value="">Категория: все</option>
+				</select>
+				<span class="toolbar-stats" id="stats">
+					<span id="typeCount">0 предметов</span>
+					<span id="errorCount" class="errors hidden">0 ошибок</span>
+				</span>
+			</div>
+		</header>
+
+		<main class="main">
+			<section class="main-block">
+				<div class="bulk-bar hidden" id="bulkBar">
+					<span class="bulk-count" id="bulkCount">Выбрано: 0</span>
+					<button type="button" id="bulkEditBtn" class="btn btn-primary btn-small">Массовое изменение</button>
+					<button type="button" id="bulkClearBtn" class="btn btn-outline btn-small">Снять выделение</button>
+				</div>
+
+				<div class="table-wrap" id="tableWrap">
+					<div class="empty-state" id="emptyState">
+						Загрузите файл types.xml.
+					</div>
+					<table class="types-table hidden" id="typesTable">
+						<thead>
+							<tr>
+								<th class="th-checkbox"><input type="checkbox" id="selectAllCheckbox" title="Выбрать все (в фильтре)"></th>
+								<th class="sortable" data-sort="name">type name</th>
+								<th class="sortable" data-sort="nominal">nominal</th>
+								<th class="sortable" data-sort="lifetime">lifetime</th>
+								<th class="sortable" data-sort="restock">restock</th>
+								<th class="sortable" data-sort="min">min</th>
+								<th class="sortable" data-sort="quantmin">quantmin</th>
+								<th class="sortable" data-sort="quantmax">quantmax</th>
+								<th class="sortable" data-sort="cost">cost</th>
+								<th class="sortable" data-sort="flags">flags</th>
+								<th class="sortable" data-sort="category">category</th>
+								<th class="sortable" data-sort="usage">usage</th>
+								<th class="sortable" data-sort="value">value</th>
+							</tr>
+						</thead>
+						<tbody id="tableBody"></tbody>
+					</table>
+				</div>
+			</section>
+		</main>
+
+		<!-- Контекстное меню -->
+		<div class="context-menu hidden" id="contextMenu">
+			<button type="button" class="context-menu-item" id="contextRemoveSpawn">Убрать из спавна</button>
+			<button type="button" class="context-menu-item" id="contextDelete">Удалить</button>
+		</div>
+
+		<button type="button" id="scrollToBottomBtn" class="scroll-to-bottom" title="Прокрутить вниз">↓</button>
+
+		<footer class="footer">
+			<span>DayZ types.xml — nominal, lifetime, restock, min, quantmin, quantmax, cost, flags, category, usage, value</span>
+		</footer>
+	</div>
+
+	<!-- Modal: источник для массового добавления (файл или вставка списка) -->
+	<div class="modal-overlay hidden" id="massAddSourceModal">
+		<div class="modal">
+			<div class="modal-header">
+				<h2>Массовое добавление — источник</h2>
+				<button type="button" id="closeMassAddSourceModal" class="btn-icon" title="Закрыть">×</button>
+			</div>
+			<div class="modal-body">
+				<p class="mass-add-source-hint">Загрузите .txt с Config-Type или вставьте список class name (по одному на строку).</p>
+				<div class="mass-add-source-options">
+					<div class="form-section">
+						<label class="btn btn-outline">
+							<input type="file" id="massAddSourceFile" accept=".txt" hidden> Загрузить из файла
+						</label>
+					</div>
+					<div class="form-section">
+						<label>Вставить список class name (по одному на строку)</label>
+						<textarea id="massAddSourcePaste" rows="8" placeholder="Item_ClassName1&#10;Item_ClassName2&#10;..."></textarea>
+					</div>
+				</div>
+				<div class="modal-actions">
+					<button type="button" id="massAddSourceContinueBtn" class="btn btn-primary">Продолжить</button>
+					<button type="button" id="massAddSourceCancelBtn" class="btn btn-outline">Отмена</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- Modal: массовое добавление из TXT -->
+	<div class="modal-overlay hidden" id="massAddModal">
+		<div class="modal modal-wide">
+			<div class="modal-header">
+				<h2>Массовое добавление предметов</h2>
+				<button type="button" id="closeMassAddModal" class="btn-icon" title="Закрыть">×</button>
+			</div>
+			<div class="modal-body">
+				<p class="mass-add-hint" id="massAddHint">Настройте параметры спавна для добавляемых предметов.</p>
+				<div class="mass-add-names" id="massAddNames"></div>
+				<div class="mass-add-form editor-form-columns">
+					<div class="editor-form-col">
+						<div class="form-section">
+							<h3>Основные</h3>
+							<div class="form-grid">
+								<label>nominal</label>
+								<input type="number" id="massAddNominal" min="0" value="0">
+								<label>lifetime</label>
+								<input type="number" id="massAddLifetime" min="0" value="3888000">
+								<label>restock</label>
+								<input type="number" id="massAddRestock" min="0" value="1800">
+								<label>min</label>
+								<input type="number" id="massAddMin" min="0" value="0">
+								<label>quantmin</label>
+								<input type="number" id="massAddQuantmin" min="-1" value="-1">
+								<label>quantmax</label>
+								<input type="number" id="massAddQuantmax" min="-1" value="-1">
+								<label>cost</label>
+								<input type="number" id="massAddCost" min="0" value="100">
+							</div>
+						</div>
+					</div>
+					<div class="editor-form-col">
+						<div class="form-section">
+							<h3>Flags</h3>
+							<div class="flags-grid">
+								<label><input type="checkbox" id="massAddFlagCargo" data-flag="count_in_cargo"> count_in_cargo</label>
+								<label><input type="checkbox" id="massAddFlagHoarder" data-flag="count_in_hoarder"> count_in_hoarder</label>
+								<label><input type="checkbox" id="massAddFlagMap" data-flag="count_in_map" checked> count_in_map</label>
+								<label><input type="checkbox" id="massAddFlagPlayer" data-flag="count_in_player"> count_in_player</label>
+								<label><input type="checkbox" id="massAddFlagCrafted" data-flag="crafted"> crafted</label>
+								<label><input type="checkbox" id="massAddFlagDeloot" data-flag="deloot"> deloot</label>
+							</div>
+						</div>
+						<div class="form-section">
+							<h3>category</h3>
+							<input type="text" id="massAddCategory" list="massAddCategoryList" placeholder="—">
+							<datalist id="massAddCategoryList"></datalist>
+						</div>
+						<div class="form-section">
+							<h3>usage</h3>
+							<textarea id="massAddUsage" rows="2" placeholder="По одному на строку"></textarea>
+						</div>
+						<div class="form-section">
+							<h3>value</h3>
+							<textarea id="massAddValue" rows="2" placeholder="По одному на строку"></textarea>
+						</div>
+				</div>
+				</div>
+				<div class="mass-add-duplicates hidden" id="massAddDuplicatesSection">
+					<h4>Дубликаты (предметы уже существуют)</h4>
+					<p class="mass-add-duplicates-hint">Выберите для каждого: оставить существующий или заменить новым.</p>
+					<div id="massAddDuplicatesList"></div>
+				</div>
+				<div class="modal-actions">
+					<button type="button" id="applyMassAddBtn" class="btn btn-primary">Добавить предметы</button>
+					<button type="button" id="cancelMassAddBtn" class="btn btn-outline">Отмена</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- Modal: добавление одного типа -->
+	<div class="modal-overlay hidden" id="singleAddModal">
+		<div class="modal modal-wide">
+			<div class="modal-header">
+				<h2>Добавить предмет</h2>
+				<button type="button" id="closeSingleAddModal" class="btn-icon" title="Закрыть">×</button>
+			</div>
+			<div class="modal-body">
+				<p class="single-add-hint">Вставьте Config-Type: ... или просто class name (один или несколько на строку). Будет добавлен тип с настройками по умолчанию.</p>
+				<textarea id="singleAddText" rows="6" placeholder="Config-Type: Kuvalda_RGN_Grenade&#10;или просто:&#10;Item_ClassName"></textarea>
+				<div class="single-add-preview" id="singleAddPreview"></div>
+				<div class="modal-actions">
+					<button type="button" id="applySingleAddBtn" class="btn btn-primary">Добавить</button>
+					<button type="button" id="cancelSingleAddBtn" class="btn btn-outline">Отмена</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- Modal: массовое изменение -->
+	<div class="modal-overlay hidden" id="bulkModal">
+		<div class="modal modal-wide">
+			<div class="modal-header">
+				<h2>Массовое изменение</h2>
+				<button type="button" id="closeBulkModal" class="btn-icon" title="Закрыть">×</button>
+			</div>
+			<div class="modal-body">
+				<p class="bulk-hint">Отметьте поля, которые нужно изменить у выбранных типов. Остальные поля не трогаются.</p>
+				<div class="bulk-form">
+					<div class="bulk-field">
+						<label><input type="checkbox" id="bulkApplyNominal"> nominal</label>
+						<input type="number" id="bulkNominal" min="0" placeholder="—">
+					</div>
+					<div class="bulk-field">
+						<label><input type="checkbox" id="bulkApplyMin"> min</label>
+						<input type="number" id="bulkMin" min="0" placeholder="—">
+					</div>
+					<div class="bulk-field">
+						<label><input type="checkbox" id="bulkApplyLifetime"> lifetime</label>
+						<input type="number" id="bulkLifetime" min="0" placeholder="—">
+					</div>
+					<div class="bulk-field">
+						<label><input type="checkbox" id="bulkApplyCategory"> category</label>
+						<input type="text" id="bulkCategory" list="bulkCategoryList" placeholder="—">
+						<datalist id="bulkCategoryList"></datalist>
+					</div>
+					<div class="bulk-field">
+						<label><input type="checkbox" id="bulkApplyUsage"> usage</label>
+						<textarea id="bulkUsage" rows="2" placeholder="По одному на строку"></textarea>
+					</div>
+					<div class="bulk-field">
+						<label><input type="checkbox" id="bulkApplyValue"> value</label>
+						<textarea id="bulkValue" rows="2" placeholder="По одному на строку"></textarea>
+					</div>
+				</div>
+				<div class="modal-actions">
+					<button type="button" id="applyBulkBtn" class="btn btn-primary">Применить к выбранным</button>
+					<button type="button" id="cancelBulkBtn" class="btn btn-outline">Отмена</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- Modal: редактор типа -->
+	<div class="modal-overlay hidden" id="editorModal">
+		<div class="modal" id="editorModalContent">
+			<form class="editor-form" id="editorForm">
+				<div class="form-header">
+					<h2>Редактирование типа</h2>
+					<button type="button" id="closeEditor" class="btn-icon" title="Закрыть">×</button>
+				</div>
+				<div class="editor-form-columns">
+					<div class="editor-form-col">
+						<div class="form-section">
+							<h3>type name</h3>
+							<input type="text" id="fieldName" data-field="name" placeholder="Имя типа">
+						</div>
+						<div class="form-section">
+							<h3>Основные</h3>
+							<div class="form-grid">
+								<label>nominal <span class="hint">(число)</span></label>
+								<input type="number" id="fieldNominal" min="0" step="1" data-field="nominal">
+								<label>lifetime <span class="hint">(сек)</span></label>
+								<input type="number" id="fieldLifetime" min="0" step="1" data-field="lifetime">
+								<label>restock</label>
+								<input type="number" id="fieldRestock" min="0" step="1" data-field="restock">
+								<label>min</label>
+								<input type="number" id="fieldMin" min="0" step="1" data-field="min">
+								<label>quantmin</label>
+								<input type="number" id="fieldQuantmin" min="-1" step="1" data-field="quantmin">
+								<label>quantmax</label>
+								<input type="number" id="fieldQuantmax" min="-1" step="1" data-field="quantmax">
+								<label>cost</label>
+								<input type="number" id="fieldCost" min="0" step="1" data-field="cost">
+							</div>
+						</div>
+					</div>
+					<div class="editor-form-col">
+						<div class="form-section">
+							<h3>Flags</h3>
+							<div class="flags-grid">
+								<label><input type="checkbox" id="flagCargo" data-flag="count_in_cargo"> count_in_cargo</label>
+								<label><input type="checkbox" id="flagHoarder" data-flag="count_in_hoarder"> count_in_hoarder</label>
+								<label><input type="checkbox" id="flagMap" data-flag="count_in_map"> count_in_map</label>
+								<label><input type="checkbox" id="flagPlayer" data-flag="count_in_player"> count_in_player</label>
+								<label><input type="checkbox" id="flagCrafted" data-flag="crafted"> crafted</label>
+								<label><input type="checkbox" id="flagDeloot" data-flag="deloot"> deloot</label>
+							</div>
+						</div>
+						<div class="form-section">
+							<h3>category</h3>
+							<input type="text" id="fieldCategory" list="categoryList" data-field="category" placeholder="например: weapons">
+							<datalist id="categoryList"></datalist>
+						</div>
+						<div class="form-section">
+							<h3>usage <span class="hint">(по одному на строку)</span></h3>
+							<textarea id="fieldUsage" rows="3" placeholder="Police&#10;Military" data-field="usage"></textarea>
+						</div>
+						<div class="form-section">
+							<h3>value <span class="hint">(по одному на строку)</span></h3>
+							<textarea id="fieldValue" rows="3" placeholder="Tier2&#10;Tier3" data-field="value"></textarea>
+						</div>
+						<div class="form-errors empty" id="formErrors"></div>
+						<div class="form-actions">
+							<button type="submit" class="btn btn-primary">Сохранить</button>
+							<button type="button" id="revertBtn" class="btn btn-outline">Отменить</button>
+						</div>
+					</div>
+				</div>
+			</form>
+		</div>
+	</div>
+
+	<!-- Modal: ошибки валидации -->
+	<div class="modal-overlay hidden" id="errorsModal">
+		<div class="modal modal-wide">
+			<div class="modal-header">
+				<h2>Ошибки валидации</h2>
+				<button type="button" id="closeErrorsModal" class="btn-icon" title="Закрыть">×</button>
+			</div>
+			<div class="modal-body">
+				<p class="errors-hint" id="errorsHint"></p>
+				<div class="errors-list" id="errorsList"></div>
+				<div class="modal-actions">
+					<button type="button" id="fixAllErrorsBtn" class="btn btn-primary" style="display: none;">Исправить все</button>
+					<button type="button" id="closeErrorsBtn" class="btn btn-outline">Закрыть</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- Modal: дубликаты -->
+	<div class="modal-overlay hidden" id="duplicatesModal">
+		<div class="modal modal-wide">
+			<div class="modal-header">
+				<h2>Дубликаты по type name</h2>
+				<button type="button" id="closeDuplicatesModal" class="btn-icon" title="Закрыть">×</button>
+			</div>
+			<div class="modal-body">
+				<p class="duplicates-hint" id="duplicatesHint">Выберите для каждой группы запись «Оставить», остальные можно удалить.</p>
+				<div id="duplicatesList"></div>
+				<div class="modal-actions">
+					<button type="button" id="applyDuplicatesBtn" class="btn btn-primary">Удалить выбранные дубликаты</button>
+					<button type="button" id="closeDuplicatesBtn" class="btn btn-outline">Закрыть</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<script src="app.js"></script>
+</body>
+</html>
