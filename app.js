@@ -88,6 +88,9 @@
 	const scrollToBottomBtn = $('scrollToBottomBtn');
 	const massAddDuplicatesSection = $('massAddDuplicatesSection');
 	const massAddDuplicatesList = $('massAddDuplicatesList');
+	const warningModal = $('warningModal');
+	const warningOkBtn = $('warningOkBtn');
+	const closeWarningModal = $('closeWarningModal');
 
 	const numberFields = [
 		'fieldNominal', 'fieldLifetime', 'fieldRestock', 'fieldMin',
@@ -1595,6 +1598,19 @@
 			const opt = document.createElement('option');
 			opt.value = c;
 			list.appendChild(opt);
+		});
+	}
+
+	// Показать предупреждение при загрузке страницы
+	if (warningModal) {
+		const hideWarning = () => {
+			warningModal.classList.add('hidden');
+		};
+		warningModal.classList.remove('hidden');
+		if (warningOkBtn) warningOkBtn.addEventListener('click', hideWarning);
+		if (closeWarningModal) closeWarningModal.addEventListener('click', hideWarning);
+		warningModal.addEventListener('click', (e) => {
+			if (e.target === warningModal) hideWarning();
 		});
 	}
 })();

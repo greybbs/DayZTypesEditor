@@ -98,6 +98,24 @@
 		</footer>
 	</div>
 
+	<!-- Modal: предупреждение о разработке -->
+	<div class="modal-overlay hidden" id="warningModal">
+		<div class="modal">
+			<div class="modal-header">
+				<h2>Внимание — приложение в разработке</h2>
+				<button type="button" id="closeWarningModal" class="btn-icon" title="Закрыть">×</button>
+			</div>
+			<div class="modal-body">
+				<p>Этот редактор типов всё ещё активно разрабатывается. Перед любыми изменениями настоятельно рекомендуем сделать <strong>резервную копию вашего файла types.xml</strong>.</p>
+				<p>Если у вас есть вопросы, пожелания или вы нашли ошибку — пожалуйста, напишите нам в Discord.</p>
+				<div class="modal-actions">
+					<button type="button" id="warningOkBtn" class="btn btn-primary">Принять</button>
+					<a href="https://discord.gg/xhQhcSNwPf" target="_blank" rel="noopener noreferrer" class="btn btn-outline">Открыть Discord</a>
+				</div>
+			</div>
+		</div>
+	</div>
+
 	<!-- Modal: источник для массового добавления (файл или вставка списка) -->
 	<div class="modal-overlay hidden" id="massAddSourceModal">
 		<div class="modal">
