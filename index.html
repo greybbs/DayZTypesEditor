@@ -18,12 +18,21 @@
 				<label class="btn btn-secondary">
 					<input type="file" id="fileInput" accept=".xml" hidden> Загрузить XML
 				</label>
-				<label class="btn btn-outline disabled" id="importXmlLabel" title="Сначала загрузите основной файл">
-					<input type="file" id="importXmlInput" accept=".xml" hidden> Добавить из XML
-				</label>
 				<button type="button" id="exportBtn" class="btn btn-primary" disabled>Скачать types.xml</button>
-				<button type="button" id="validateBtn" class="btn btn-outline">Валидация</button>
-				<button type="button" id="duplicatesBtn" class="btn btn-outline" disabled>Поиск дубликатов</button>
+				<div class="toolbar-dropdown">
+					<button type="button" id="toolsBtn" class="btn btn-outline toolbar-tools-btn">Инструменты ▾</button>
+					<div class="toolbar-dropdown-menu hidden" id="toolsMenu">
+						<label class="toolbar-dropdown-item disabled" id="importXmlLabel" title="Сначала загрузите основной файл">
+							<input type="file" id="importXmlInput" accept=".xml" hidden> Добавить из XML
+						</label>
+						<button type="button" id="validateBtn" class="toolbar-dropdown-item">Валидация</button>
+						<button type="button" id="duplicatesBtn" class="toolbar-dropdown-item" disabled>Поиск дубликатов</button>
+						<hr class="toolbar-dropdown-sep">
+						<label class="toolbar-dropdown-item" id="compareVanillaLabel">
+							<input type="file" id="vanillaXmlInput" accept=".xml" hidden> Сравнить с Vanilla
+						</label>
+					</div>
+				</div>
 				<button type="button" id="massAddOpenBtn" class="btn btn-outline">Массовое добавление</button>
 				<button type="button" id="addSingleTypeBtn" class="btn btn-outline">Добавить предмет</button>
 				<span class="toolbar-sep"></span>
@@ -35,6 +44,7 @@
 					<span id="typeCount">0 предметов</span>
 					<span id="errorCount" class="errors hidden">0 ошибок</span>
 				</span>
+				<a href="https://discord.gg/xhQhcSNwPf" class="btn btn-outline toolbar-discord-link" target="_blank" rel="noopener noreferrer">Discord</a>
 			</div>
 		</header>
 
@@ -84,7 +94,7 @@
 		<button type="button" id="scrollToBottomBtn" class="scroll-to-bottom" title="Прокрутить вниз">↓</button>
 
 		<footer class="footer">
-			<span>DayZ types.xml — nominal, lifetime, restock, min, quantmin, quantmax, cost, flags, category, usage, value</span>
+			<span>TTL MODS 2026</span>
 		</footer>
 	</div>
 

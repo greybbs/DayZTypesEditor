@@ -63,11 +63,78 @@ body {
 	flex-wrap: wrap;
 }
 
+.toolbar-discord-link {
+	margin-left: auto;
+}
+
 .toolbar-sep {
 	width: 1px;
 	height: 1.5rem;
 	background: var(--border);
 	margin: 0 0.25rem;
+}
+
+.toolbar-dropdown {
+	position: relative;
+}
+
+.toolbar-tools-btn {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.25rem;
+}
+
+.toolbar-dropdown-menu {
+	position: absolute;
+	top: 100%;
+	left: 0;
+	margin-top: 0.25rem;
+	min-width: 220px;
+	background: var(--bg-panel);
+	border: 1px solid var(--border);
+	border-radius: var(--radius);
+	box-shadow: var(--shadow);
+	padding: 0.25rem 0;
+	z-index: 1100;
+}
+
+.toolbar-dropdown-menu.hidden {
+	display: none;
+}
+
+.toolbar-dropdown-item {
+	width: 100%;
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	padding: 0.4rem 0.8rem;
+	font-size: 0.9rem;
+	font-family: var(--font-ui);
+	color: var(--text);
+	background: transparent;
+	border: none;
+	text-align: left;
+	cursor: pointer;
+}
+
+.toolbar-dropdown-item:hover {
+	background: var(--bg-input);
+}
+
+.toolbar-dropdown-item.disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+	pointer-events: none;
+}
+
+.toolbar-dropdown-item input[type="file"] {
+	display: none;
+}
+
+.toolbar-dropdown-sep {
+	margin: 0.25rem 0;
+	border: none;
+	border-top: 1px solid var(--border);
 }
 
 .toolbar-input {
@@ -373,6 +440,14 @@ label.btn.disabled {
 
 .types-table tbody tr.selected.active {
 	background: rgba(90, 143, 94, 0.25);
+}
+
+.types-table tbody tr.row-modified:not(.selected) {
+	background: rgba(255, 235, 130, 0.5);
+}
+
+.types-table tbody tr.row-custom:not(.selected) {
+	background: rgba(130, 180, 255, 0.45);
 }
 
 .types-table td {
@@ -997,6 +1072,7 @@ label.btn.disabled {
 	background: var(--bg-panel);
 	font-size: 0.8rem;
 	color: var(--text-muted);
+	text-align: center;
 }
 
 /* Scroll to bottom button */

@@ -25,6 +25,8 @@
 	const fileInput = $('fileInput');
 	const importXmlInput = $('importXmlInput');
 	const exportBtn = $('exportBtn');
+	const toolsBtn = $('toolsBtn');
+	const toolsMenu = $('toolsMenu');
 	const validateBtn = $('validateBtn');
 	const searchInput = $('searchInput');
 	const categoryFilter = $('categoryFilter');
@@ -109,6 +111,7 @@
 	const tagCheckboxes = Array.from(document.querySelectorAll('.tag-option'));
 	const categoryOptions = Array.from(document.querySelectorAll('.category-option'));
 	const usageCheckboxes = Array.from(document.querySelectorAll('.usage-option'));
+	let vanillaTypesMap = null;
 
 	function syncValueTiersFromTextarea() {
 		const valueEl = $(fieldIds.value);
@@ -181,6 +184,82 @@
 	usageCheckboxes.forEach(cb => {
 		cb.addEventListener('change', syncTextareaFromUsage);
 	});
+
+	function normalizeTypeForCompare(t) {
+		const normFlags = {};
+		const srcFlags = t.flags || {};
+		['count_in_cargo','count_in_hoarder','count_in_map','count_in_player','crafted','deloot'].forEach(k => {
+			normFlags[k] = (srcFlags[k] || '0').toString();
+		});
+		const normalizeArr = (arr) => (arr || []).map(v => String(v || '').trim()).filter(Boolean).sort();
+		return {
+			nominal: String(t.nominal ?? '').trim(),
+			lifetime: String(t.lifetime ?? '').trim(),
+			restock: String(t.restock ?? '').trim(),
+			min: String(t.min ?? '').trim(),
+			quantmin: String(t.quantmin ?? '').trim(),
+			quantmax: String(t.quantmax ?? '').trim(),
+			cost: String(t.cost ?? '').trim(),
+			flags: normFlags,
+			category: String(t.category ?? '').trim(),
+			tags: normalizeArr(t.tags),
+			usage: normalizeArr(t.usage),
+			value: normalizeArr(t.value)
+		};
+	}
+
+	function typesEqualForCompare(a, b) {
+		const na = normalizeTypeForCompare(a);
+		const nb = normalizeTypeForCompare(b);
+		const keys = ['nominal','lifetime','restock','min','quantmin','quantmax','cost','category'];
+		for (const k of keys) {
+			if (na[k] !== nb[k]) return false;
+		}
+		const flagKeys = ['count_in_cargo','count_in_hoarder','count_in_map','count_in_player','crafted','deloot'];
+		for (const fk of flagKeys) {
+			if (na.flags[fk] !== nb.flags[fk]) return false;
+		}
+		const arrKeys = ['tags','usage','value'];
+		for (const ak of arrKeys) {
+			const va = na[ak];
+			const vb = nb[ak];
+			if (va.length !== vb.length) return false;
+			for (let i = 0; i < va.length; i++) {
+				if (va[i] !== vb[i]) return false;
+			}
+		}
+		return true;
+	}
+
+	function diffSummaryForVanilla(a, b) {
+		const na = normalizeTypeForCompare(a);
+		const nb = normalizeTypeForCompare(b);
+		const changed = [];
+		const keys = ['nominal','lifetime','restock','min','quantmin','quantmax','cost','category'];
+		keys.forEach(k => {
+			if (na[k] !== nb[k]) changed.push(k);
+		});
+		const flagKeys = ['count_in_cargo','count_in_hoarder','count_in_map','count_in_player','crafted','deloot'];
+		flagKeys.forEach(fk => {
+			if (na.flags[fk] !== nb.flags[fk]) changed.push('flags.' + fk);
+		});
+		const arrKeys = ['tags','usage','value'];
+		arrKeys.forEach(ak => {
+			const va = na[ak];
+			const vb = nb[ak];
+			if (va.length !== vb.length) changed.push(ak);
+			else {
+				for (let i = 0; i < va.length; i++) {
+					if (va[i] !== vb[i]) {
+						changed.push(ak);
+						break;
+					}
+				}
+			}
+		});
+		if (!changed.length) return '';
+		return 'Отличается от vanilla в полях: ' + changed.join(', ');
+	}
 
 	function syncCategoryFromInput() {
 		const catEl = $(fieldIds.category);
@@ -385,7 +464,23 @@
 
 	function makeDataRow(t, globalIndex, err, isSelected) {
 			const tr = document.createElement('tr');
-			tr.className = (globalIndex === selectedIndex ? ' active' : '') + (err.length ? ' has-error' : '') + (isSelected ? ' selected' : '');
+			let cls = '';
+			let title = '';
+			if (globalIndex === selectedIndex) cls += ' active';
+			if (err.length) cls += ' has-error';
+			if (isSelected) cls += ' selected';
+			if (vanillaTypesMap && t.name) {
+				const vanilla = vanillaTypesMap.get((t.name || '').trim());
+				if (!vanilla) {
+					cls += ' row-custom';
+					title = 'Тип отсутствует в vanilla types.xml';
+				} else if (!typesEqualForCompare(t, vanilla)) {
+					cls += ' row-modified';
+					title = diffSummaryForVanilla(t, vanilla);
+				}
+			}
+			tr.className = cls.trim();
+			if (title) tr.title = title;
 			tr.dataset.index = String(globalIndex);
 			const cb = document.createElement('td');
 			cb.className = 'td-checkbox';
@@ -1025,6 +1120,50 @@
 			};
 			reader.readAsText(file, 'UTF-8');
 			importXmlInput.value = '';
+		});
+	}
+
+	if (toolsBtn && toolsMenu) {
+		toolsBtn.addEventListener('click', (e) => {
+			e.stopPropagation();
+			toolsMenu.classList.toggle('hidden');
+		});
+		document.addEventListener('click', () => {
+			toolsMenu.classList.add('hidden');
+		});
+		toolsMenu.addEventListener('click', (e) => e.stopPropagation());
+	}
+
+	const vanillaXmlInput = $('vanillaXmlInput');
+	if (vanillaXmlInput) {
+		vanillaXmlInput.addEventListener('change', () => {
+			const file = vanillaXmlInput.files[0];
+			if (!file) return;
+			if (!types.length) {
+				showToast('Сначала загрузите ваш types.xml.', 'error');
+				vanillaXmlInput.value = '';
+				return;
+			}
+			showToast('Загрузка vanilla types...', '');
+			const reader = new FileReader();
+			reader.onload = () => {
+				try {
+					const { types: vanillaTypes } = parseXml(reader.result);
+					const map = new Map();
+					vanillaTypes.forEach(t => {
+						const name = (t.name || '').trim();
+						if (!name) return;
+						if (!map.has(name)) map.set(name, t);
+					});
+					vanillaTypesMap = map;
+					renderTable();
+					showToast(`Vanilla types загружен, найдено ${vanillaTypesMap.size} типов.`, 'success');
+				} catch (err) {
+					showToast(err.message, 'error');
+				}
+			};
+			reader.readAsText(file, 'UTF-8');
+			vanillaXmlInput.value = '';
 		});
 	}
 
