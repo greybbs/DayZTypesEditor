@@ -63,6 +63,7 @@
 	const contextMenu = $('contextMenu');
 	const contextRemoveSpawn = $('contextRemoveSpawn');
 	const contextDelete = $('contextDelete');
+	const contextBulkEdit = $('contextBulkEdit');
 	const massAddOpenBtn = $('massAddOpenBtn');
 	const massAddSourceModal = $('massAddSourceModal');
 	const massAddSourceFile = $('massAddSourceFile');
@@ -103,6 +104,31 @@
 		usage: 'fieldUsage',
 		value: 'fieldValue'
 	};
+	const valueTierCheckboxes = Array.from(document.querySelectorAll('.value-tier'));
+
+	function syncValueTiersFromTextarea() {
+		const valueEl = $(fieldIds.value);
+		if (!valueEl || !valueTierCheckboxes.length) return;
+		const current = new Set(
+			valueEl.value.split(/\n/).map(s => s.trim()).filter(Boolean)
+		);
+		valueTierCheckboxes.forEach(cb => {
+			cb.checked = current.has(cb.value);
+		});
+	}
+
+	function syncTextareaFromValueTiers() {
+		const valueEl = $(fieldIds.value);
+		if (!valueEl || !valueTierCheckboxes.length) return;
+		const selected = valueTierCheckboxes
+			.filter(cb => cb.checked)
+			.map(cb => cb.value);
+		valueEl.value = selected.join('\n');
+	}
+
+	valueTierCheckboxes.forEach(cb => {
+		cb.addEventListener('change', syncTextareaFromValueTiers);
+	});
 
 	function parseTypeNode(typeEl) {
 		const name = typeEl.getAttribute('name') || '';
@@ -367,6 +393,10 @@
 		contextMenuTargetIndex = rowIndex;
 		contextMenu.style.left = x + 'px';
 		contextMenu.style.top = y + 'px';
+		if (contextBulkEdit) {
+			// Кнопка массового изменения только когда выбрано больше одного элемента
+			contextBulkEdit.classList.toggle('hidden', selectedIndices.size <= 1);
+		}
 		contextMenu.classList.remove('hidden');
 	}
 
@@ -405,6 +435,15 @@
 			deleteTypes(new Set([contextMenuTargetIndex]));
 		}
 	});
+
+	if (contextBulkEdit) {
+		contextBulkEdit.addEventListener('click', () => {
+			hideContextMenu();
+			if (selectedIndices.size > 1) {
+				bulkEditBtn.click();
+			}
+		});
+	}
 
 	document.addEventListener('click', () => hideContextMenu());
 	contextMenu.addEventListener('click', (e) => e.stopPropagation());
@@ -526,7 +565,13 @@
 		const usageEl = $(fieldIds.usage);
 		if (usageEl) { usageEl.value = fillWithDefaults ? (src.usage || []).join('\n') : (t.usage || []).join('\n'); usageEl.classList.toggle('field-default-filled', fillWithDefaults); if (fillWithDefaults) usageEl.oninput = () => { clearDefaultHighlight(usageEl); usageEl.oninput = null; }; }
 		const valueEl = $(fieldIds.value);
-		if (valueEl) { valueEl.value = fillWithDefaults ? (src.value || []).join('\n') : (t.value || []).join('\n'); valueEl.classList.toggle('field-default-filled', fillWithDefaults); if (fillWithDefaults) valueEl.oninput = () => { clearDefaultHighlight(valueEl); valueEl.oninput = null; }; }
+		if (valueEl) {
+			valueEl.value = fillWithDefaults ? (src.value || []).join('\n') : (t.value || []).join('\n');
+			valueEl.classList.toggle('field-default-filled', fillWithDefaults);
+			if (fillWithDefaults) valueEl.oninput = () => { clearDefaultHighlight(valueEl); valueEl.oninput = null; };
+			// Обновляем чекбоксы тиров по текущему значению
+			syncValueTiersFromTextarea();
+		}
 		Object.keys(FLAG_IDS).forEach(flagKey => {
 			const cb = $(FLAG_IDS[flagKey]);
 			if (cb) {

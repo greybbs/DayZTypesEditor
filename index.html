@@ -78,6 +78,7 @@
 		<div class="context-menu hidden" id="contextMenu">
 			<button type="button" class="context-menu-item" id="contextRemoveSpawn">Убрать из спавна</button>
 			<button type="button" class="context-menu-item" id="contextDelete">Удалить</button>
+			<button type="button" class="context-menu-item hidden" id="contextBulkEdit">Массовое изменение</button>
 		</div>
 
 		<button type="button" id="scrollToBottomBtn" class="scroll-to-bottom" title="Прокрутить вниз">↓</button>
@@ -306,8 +307,14 @@
 							<textarea id="fieldUsage" rows="3" placeholder="Police&#10;Military" data-field="usage"></textarea>
 						</div>
 						<div class="form-section">
-							<h3>value <span class="hint">(по одному на строку)</span></h3>
-							<textarea id="fieldValue" rows="3" placeholder="Tier2&#10;Tier3" data-field="value"></textarea>
+							<h3>value <span class="hint"></span></h3>
+							<div class="flags-grid value-tiers">
+								<label><input type="checkbox" class="value-tier" value="Tier1"> Tier1</label>
+								<label><input type="checkbox" class="value-tier" value="Tier2"> Tier2</label>
+								<label><input type="checkbox" class="value-tier" value="Tier3"> Tier3</label>
+								<label><input type="checkbox" class="value-tier" value="Tier4"> Tier4</label>
+							</div>
+							<textarea id="fieldValue" rows="3" style="display:none;" data-field="value"></textarea>
 						</div>
 						<div class="form-errors empty" id="formErrors"></div>
 						<div class="form-actions">
