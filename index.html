@@ -146,62 +146,105 @@
 
 	<!-- Modal: массовое добавление из TXT -->
 	<div class="modal-overlay hidden" id="massAddModal">
-		<div class="modal modal-wide">
+		<div class="modal" id="massAddModalContent">
 			<div class="modal-header">
 				<h2>Массовое добавление предметов</h2>
 				<button type="button" id="closeMassAddModal" class="btn-icon" title="Закрыть">×</button>
 			</div>
 			<div class="modal-body">
 				<p class="mass-add-hint" id="massAddHint">Настройте параметры спавна для добавляемых предметов.</p>
-				<div class="mass-add-names" id="massAddNames"></div>
-				<div class="mass-add-form editor-form-columns">
+				<div class="editor-form-columns">
 					<div class="editor-form-col">
 						<div class="form-section">
 							<h3>Основные</h3>
 							<div class="form-grid">
-								<label>nominal</label>
-								<input type="number" id="massAddNominal" min="0" value="0">
-								<label>lifetime</label>
-								<input type="number" id="massAddLifetime" min="0" value="3888000">
+								<label>nominal <span class="hint">(число)</span></label>
+								<input type="number" id="massAddNominal" min="0" step="1">
+								<label>lifetime <span class="hint">(сек)</span></label>
+								<input type="number" id="massAddLifetime" min="0" step="1">
 								<label>restock</label>
-								<input type="number" id="massAddRestock" min="0" value="1800">
+								<input type="number" id="massAddRestock" min="0" step="1">
 								<label>min</label>
-								<input type="number" id="massAddMin" min="0" value="0">
+								<input type="number" id="massAddMin" min="0" step="1">
 								<label>quantmin</label>
-								<input type="number" id="massAddQuantmin" min="-1" value="-1">
+								<input type="number" id="massAddQuantmin" min="-1" step="1">
 								<label>quantmax</label>
-								<input type="number" id="massAddQuantmax" min="-1" value="-1">
+								<input type="number" id="massAddQuantmax" min="-1" step="1">
 								<label>cost</label>
-								<input type="number" id="massAddCost" min="0" value="100">
+								<input type="number" id="massAddCost" min="0" step="1">
 							</div>
 						</div>
-					</div>
-					<div class="editor-form-col">
 						<div class="form-section">
 							<h3>Flags</h3>
 							<div class="flags-grid">
 								<label><input type="checkbox" id="massAddFlagCargo" data-flag="count_in_cargo"> count_in_cargo</label>
 								<label><input type="checkbox" id="massAddFlagHoarder" data-flag="count_in_hoarder"> count_in_hoarder</label>
-								<label><input type="checkbox" id="massAddFlagMap" data-flag="count_in_map" checked> count_in_map</label>
+								<label><input type="checkbox" id="massAddFlagMap" data-flag="count_in_map"> count_in_map</label>
 								<label><input type="checkbox" id="massAddFlagPlayer" data-flag="count_in_player"> count_in_player</label>
 								<label><input type="checkbox" id="massAddFlagCrafted" data-flag="crafted"> crafted</label>
 								<label><input type="checkbox" id="massAddFlagDeloot" data-flag="deloot"> deloot</label>
 							</div>
 						</div>
+					</div>
+					<div class="editor-form-col">
 						<div class="form-section">
 							<h3>category</h3>
-							<input type="text" id="massAddCategory" list="massAddCategoryList" placeholder="—">
-							<datalist id="massAddCategoryList"></datalist>
+							<div class="flags-grid category-grid">
+								<label><input type="radio" name="massAddCategoryOption" class="mass-add-category-option" value="tools"> tools</label>
+								<label><input type="radio" name="massAddCategoryOption" class="mass-add-category-option" value="containers"> containers</label>
+								<label><input type="radio" name="massAddCategoryOption" class="mass-add-category-option" value="clothes"> clothes</label>
+								<label><input type="radio" name="massAddCategoryOption" class="mass-add-category-option" value="lootdispatch"> lootdispatch</label>
+								<label><input type="radio" name="massAddCategoryOption" class="mass-add-category-option" value="food"> food</label>
+								<label><input type="radio" name="massAddCategoryOption" class="mass-add-category-option" value="weapons"> weapons</label>
+								<label><input type="radio" name="massAddCategoryOption" class="mass-add-category-option" value="books"> books</label>
+								<label><input type="radio" name="massAddCategoryOption" class="mass-add-category-option" value="explosives"> explosives</label>
+							</div>
+							<input type="hidden" id="massAddCategory">
+						</div>
+						<div class="form-section">
+							<h3>tag</h3>
+							<div class="flags-grid tag-grid">
+								<label><input type="checkbox" class="mass-add-tag-option" value="floor"> floor</label>
+								<label><input type="checkbox" class="mass-add-tag-option" value="shelves"> shelves</label>
+								<label><input type="checkbox" class="mass-add-tag-option" value="ground"> ground</label>
+							</div>
+							<textarea id="massAddTags" rows="3" style="display:none;"></textarea>
 						</div>
 						<div class="form-section">
 							<h3>usage</h3>
-							<textarea id="massAddUsage" rows="2" placeholder="По одному на строку"></textarea>
+							<div class="flags-grid usage-grid">
+								<label><input type="checkbox" class="mass-add-usage-option" value="Military"> Military</label>
+								<label><input type="checkbox" class="mass-add-usage-option" value="Police"> Police</label>
+								<label><input type="checkbox" class="mass-add-usage-option" value="Medic"> Medic</label>
+								<label><input type="checkbox" class="mass-add-usage-option" value="Firefighter"> Firefighter</label>
+								<label><input type="checkbox" class="mass-add-usage-option" value="Industrial"> Industrial</label>
+								<label><input type="checkbox" class="mass-add-usage-option" value="Farm"> Farm</label>
+								<label><input type="checkbox" class="mass-add-usage-option" value="Coast"> Coast</label>
+								<label><input type="checkbox" class="mass-add-usage-option" value="Town"> Town</label>
+								<label><input type="checkbox" class="mass-add-usage-option" value="Village"> Village</label>
+								<label><input type="checkbox" class="mass-add-usage-option" value="Hunting"> Hunting</label>
+								<label><input type="checkbox" class="mass-add-usage-option" value="Office"> Office</label>
+								<label><input type="checkbox" class="mass-add-usage-option" value="School"> School</label>
+								<label><input type="checkbox" class="mass-add-usage-option" value="Prison"> Prison</label>
+								<label><input type="checkbox" class="mass-add-usage-option" value="Lunapark"> Lunapark</label>
+								<label><input type="checkbox" class="mass-add-usage-option" value="SeasonalEvent"> SeasonalEvent</label>
+								<label><input type="checkbox" class="mass-add-usage-option" value="ContaminatedArea"> ContaminatedArea</label>
+								<label><input type="checkbox" class="mass-add-usage-option" value="Historical"> Historical</label>
+							</div>
+							<textarea id="massAddUsage" rows="3" style="display:none;"></textarea>
 						</div>
 						<div class="form-section">
 							<h3>value</h3>
-							<textarea id="massAddValue" rows="2" placeholder="По одному на строку"></textarea>
+							<div class="flags-grid value-tiers">
+								<label><input type="checkbox" class="mass-add-value-tier" value="Tier1"> Tier1</label>
+								<label><input type="checkbox" class="mass-add-value-tier" value="Tier2"> Tier2</label>
+								<label><input type="checkbox" class="mass-add-value-tier" value="Tier3"> Tier3</label>
+								<label><input type="checkbox" class="mass-add-value-tier" value="Tier4"> Tier4</label>
+								<label><input type="checkbox" class="mass-add-value-tier" value="Unique"> Unique</label>
+							</div>
+							<textarea id="massAddValue" rows="3" style="display:none;"></textarea>
 						</div>
-				</div>
+					</div>
 				</div>
 				<div class="mass-add-duplicates hidden" id="massAddDuplicatesSection">
 					<h4>Дубликаты (предметы уже существуют)</h4>
@@ -210,8 +253,22 @@
 				</div>
 				<div class="modal-actions">
 					<button type="button" id="applyMassAddBtn" class="btn btn-primary">Добавить предметы</button>
+					<button type="button" id="showMassAddNamesBtn" class="btn btn-outline">Показать список</button>
 					<button type="button" id="cancelMassAddBtn" class="btn btn-outline">Отмена</button>
 				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- Modal: список имён при массовом добавлении -->
+	<div class="modal-overlay hidden" id="massAddNamesModal">
+		<div class="modal modal-sm">
+			<div class="modal-header">
+				<h2>Список добавляемых предметов</h2>
+				<button type="button" id="closeMassAddNamesModal" class="btn-icon" title="Закрыть">×</button>
+			</div>
+			<div class="modal-body">
+				<div class="mass-add-names-list" id="massAddNamesListContent"></div>
 			</div>
 		</div>
 	</div>

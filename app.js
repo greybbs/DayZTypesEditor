@@ -75,7 +75,6 @@
 	const massAddSourceCancelBtn = $('massAddSourceCancelBtn');
 	const addSingleTypeBtn = $('addSingleTypeBtn');
 	const massAddModal = $('massAddModal');
-	const massAddNames = $('massAddNames');
 	const closeMassAddModal = $('closeMassAddModal');
 	const cancelMassAddBtn = $('cancelMassAddBtn');
 	const applyMassAddBtn = $('applyMassAddBtn');
@@ -117,6 +116,10 @@
 	const bulkCategoryOptions = Array.from(document.querySelectorAll('.bulk-category-option'));
 	const bulkUsageCheckboxes = Array.from(document.querySelectorAll('.bulk-usage-option'));
 	const bulkValueTierCheckboxes = Array.from(document.querySelectorAll('.bulk-value-tier'));
+	const massAddCategoryOptions = Array.from(document.querySelectorAll('.mass-add-category-option'));
+	const massAddTagCheckboxes = Array.from(document.querySelectorAll('.mass-add-tag-option'));
+	const massAddUsageCheckboxes = Array.from(document.querySelectorAll('.mass-add-usage-option'));
+	const massAddValueTierCheckboxes = Array.from(document.querySelectorAll('.mass-add-value-tier'));
 	let vanillaTypesMap = null;
 
 	function syncValueTiersFromTextarea() {
@@ -257,6 +260,98 @@
 
 	bulkValueTierCheckboxes.forEach(cb => {
 		cb.addEventListener('change', syncBulkTextareaFromValue);
+	});
+
+	function syncMassAddCategoryFromInput() {
+		const catEl = $('massAddCategory');
+		if (!catEl || !massAddCategoryOptions.length) return;
+		const current = (catEl.value || '').trim();
+		massAddCategoryOptions.forEach(opt => {
+			opt.checked = opt.value === current;
+		});
+	}
+
+	function syncMassAddInputFromCategory() {
+		const catEl = $('massAddCategory');
+		if (!catEl || !massAddCategoryOptions.length) return;
+		const selected = massAddCategoryOptions.find(opt => opt.checked);
+		catEl.value = selected ? selected.value : '';
+	}
+
+	massAddCategoryOptions.forEach(opt => {
+		opt.addEventListener('change', syncMassAddInputFromCategory);
+	});
+
+	function syncMassAddTagsFromTextarea() {
+		const tagsEl = $('massAddTags');
+		if (!tagsEl || !massAddTagCheckboxes.length) return;
+		const current = new Set(
+			tagsEl.value.split(/\n/).map(s => s.trim()).filter(Boolean)
+		);
+		massAddTagCheckboxes.forEach(cb => {
+			cb.checked = current.has(cb.value);
+		});
+	}
+
+	function syncMassAddTextareaFromTags() {
+		const tagsEl = $('massAddTags');
+		if (!tagsEl || !massAddTagCheckboxes.length) return;
+		const selected = massAddTagCheckboxes
+			.filter(cb => cb.checked)
+			.map(cb => cb.value);
+		tagsEl.value = selected.join('\n');
+	}
+
+	massAddTagCheckboxes.forEach(cb => {
+		cb.addEventListener('change', syncMassAddTextareaFromTags);
+	});
+
+	function syncMassAddUsageFromTextarea() {
+		const usageEl = $('massAddUsage');
+		if (!usageEl || !massAddUsageCheckboxes.length) return;
+		const current = new Set(
+			usageEl.value.split(/\n/).map(s => s.trim()).filter(Boolean)
+		);
+		massAddUsageCheckboxes.forEach(cb => {
+			cb.checked = current.has(cb.value);
+		});
+	}
+
+	function syncMassAddTextareaFromUsage() {
+		const usageEl = $('massAddUsage');
+		if (!usageEl || !massAddUsageCheckboxes.length) return;
+		const selected = massAddUsageCheckboxes
+			.filter(cb => cb.checked)
+			.map(cb => cb.value);
+		usageEl.value = selected.join('\n');
+	}
+
+	massAddUsageCheckboxes.forEach(cb => {
+		cb.addEventListener('change', syncMassAddTextareaFromUsage);
+	});
+
+	function syncMassAddValueFromTextarea() {
+		const valueEl = $('massAddValue');
+		if (!valueEl || !massAddValueTierCheckboxes.length) return;
+		const current = new Set(
+			valueEl.value.split(/\n/).map(s => s.trim()).filter(Boolean)
+		);
+		massAddValueTierCheckboxes.forEach(cb => {
+			cb.checked = current.has(cb.value);
+		});
+	}
+
+	function syncMassAddTextareaFromValue() {
+		const valueEl = $('massAddValue');
+		if (!valueEl || !massAddValueTierCheckboxes.length) return;
+		const selected = massAddValueTierCheckboxes
+			.filter(cb => cb.checked)
+			.map(cb => cb.value);
+		valueEl.value = selected.join('\n');
+	}
+
+	massAddValueTierCheckboxes.forEach(cb => {
+		cb.addEventListener('change', syncMassAddTextareaFromValue);
 	});
 
 	function normalizeTypeForCompare(t) {
@@ -972,12 +1067,20 @@
 			showToast('Нет имён для добавления.', 'error');
 			return;
 		}
-		const newNames = allNames.filter(n => !types.some(t => t.name === n));
-		const duplicateNames = allNames.filter(n => types.some(t => t.name === n));
+		const invalidNames = allNames.filter(n => hasRussianLetters(n));
+		if (invalidNames.length > 0) {
+			showToast('Исключены (содержат русские буквы): ' + invalidNames.join(', '), 'error');
+		}
+		const validNames = allNames.filter(n => !hasRussianLetters(n));
+		if (validNames.length === 0) {
+			showToast('Нет валидных имён для добавления.', 'error');
+			return;
+		}
+		const newNames = validNames.filter(n => !types.some(t => t.name === n));
+		const duplicateNames = validNames.filter(n => types.some(t => t.name === n));
 		massAddNamesList = newNames;
 		massAddDuplicateChoices = {};
 		duplicateNames.forEach(n => { massAddDuplicateChoices[n] = 'keep'; });
-		massAddNames.innerHTML = massAddNamesList.map(n => '<span>' + escapeHtml(n) + '</span>').join('');
 		$('massAddHint').textContent = 'Новых: ' + massAddNamesList.length + (duplicateNames.length ? ', дубликатов: ' + duplicateNames.length : '') + '. Настройте параметры спавна.';
 		if (duplicateNames.length > 0) {
 			massAddDuplicatesSection.classList.remove('hidden');
@@ -1009,16 +1112,14 @@
 			const cb = $(id);
 			if (cb) cb.checked = DEFAULT_TYPE.flags[cb.dataset.flag] === '1';
 		});
-		$('massAddCategory').value = '';
-		$('massAddUsage').value = '';
-		$('massAddValue').value = '';
-		const list = $('massAddCategoryList');
-		list.innerHTML = '';
-		Array.from(categoriesSet).sort().forEach(c => {
-			const opt = document.createElement('option');
-			opt.value = c;
-			list.appendChild(opt);
-		});
+		$('massAddCategory').value = DEFAULT_TYPE.category || '';
+		$('massAddTags').value = (DEFAULT_TYPE.tags || []).join('\n');
+		$('massAddUsage').value = (DEFAULT_TYPE.usage || []).join('\n');
+		$('massAddValue').value = (DEFAULT_TYPE.value || []).join('\n');
+		syncMassAddCategoryFromInput();
+		syncMassAddTagsFromTextarea();
+		syncMassAddUsageFromTextarea();
+		syncMassAddValueFromTextarea();
 		massAddSourceModal.classList.add('hidden');
 		massAddModal.classList.remove('hidden');
 	}
@@ -1057,9 +1158,19 @@
 		// Можно оставить выбор файла; по кнопке «Продолжить» прочитаем
 	});
 
+	const massAddNamesModal = $('massAddNamesModal');
+	const showMassAddNamesBtn = $('showMassAddNamesBtn');
+	const closeMassAddNamesModal = $('closeMassAddNamesModal');
+
 	closeMassAddModal.addEventListener('click', () => massAddModal.classList.add('hidden'));
 	cancelMassAddBtn.addEventListener('click', () => massAddModal.classList.add('hidden'));
 	massAddModal.addEventListener('click', (e) => { if (e.target === massAddModal) massAddModal.classList.add('hidden'); });
+	showMassAddNamesBtn.addEventListener('click', () => {
+		$('massAddNamesListContent').innerHTML = massAddNamesList.map(n => '<span>' + escapeHtml(n) + '</span>').join('');
+		massAddNamesModal.classList.remove('hidden');
+	});
+	closeMassAddNamesModal.addEventListener('click', () => massAddNamesModal.classList.add('hidden'));
+	massAddNamesModal.addEventListener('click', (e) => { if (e.target === massAddNamesModal) massAddNamesModal.classList.add('hidden'); });
 	applyMassAddBtn.addEventListener('click', () => {
 		const nominal = $('massAddNominal').value.trim() || DEFAULT_TYPE.nominal;
 		const lifetime = $('massAddLifetime').value.trim() || DEFAULT_TYPE.lifetime;
@@ -1069,6 +1180,7 @@
 		const quantmax = $('massAddQuantmax').value.trim() || DEFAULT_TYPE.quantmax;
 		const cost = $('massAddCost').value.trim() || DEFAULT_TYPE.cost;
 		const category = $('massAddCategory').value.trim();
+		const tags = $('massAddTags').value.split(/\n/).map(s => s.trim()).filter(Boolean);
 		const usage = $('massAddUsage').value.split(/\n/).map(s => s.trim()).filter(Boolean);
 		const value = $('massAddValue').value.split(/\n/).map(s => s.trim()).filter(Boolean);
 		const flags = {
@@ -1079,10 +1191,15 @@
 			crafted: $('massAddFlagCrafted').checked ? '1' : '0',
 			deloot: $('massAddFlagDeloot').checked ? '1' : '0'
 		};
+		const invalid = massAddNamesList.filter(n => hasRussianLetters(n));
+		if (invalid.length > 0) {
+			showToast('Class name не должен содержать русские буквы: ' + invalid.join(', '), 'error');
+			return;
+		}
 		let added = 0;
 		let replaced = 0;
 		massAddNamesList.forEach(name => {
-			types.push({ name, nominal, lifetime, restock, min, quantmin, quantmax, cost, flags, category, usage: [...usage], value: [...value] });
+			types.push({ name, nominal, lifetime, restock, min, quantmin, quantmax, cost, flags, category, tags: [...tags], usage: [...usage], value: [...value] });
 			if (category) categoriesSet.add(category);
 			added++;
 		});
@@ -1090,7 +1207,7 @@
 			if (massAddDuplicateChoices[name] === 'replace') {
 				const idx = types.findIndex(t => t.name === name);
 				if (idx >= 0) {
-					types[idx] = { name, nominal, lifetime, restock, min, quantmin, quantmax, cost, flags, category, usage: [...usage], value: [...value] };
+					types[idx] = { name, nominal, lifetime, restock, min, quantmin, quantmax, cost, flags, category, tags: [...tags], usage: [...usage], value: [...value] };
 					if (category) categoriesSet.add(category);
 					replaced++;
 				}
@@ -1128,6 +1245,10 @@
 			return;
 		}
 		const name = names[0];
+		if (hasRussianLetters(name)) {
+			showToast('Class name не должен содержать русские буквы: ' + name, 'error');
+			return;
+		}
 		if (types.some(t => t.name === name)) {
 			showToast('Тип "' + name + '" уже существует.', 'error');
 			return;
@@ -1330,19 +1451,27 @@
 		value: []
 	};
 
+	const RUSSIAN_LETTERS = /[а-яА-ЯёЁ]/;
+
+	function hasRussianLetters(s) {
+		return RUSSIAN_LETTERS.test(s);
+	}
+
 	function parseConfigTypeTxt(text) {
 		const names = [];
+		const addName = (n) => {
+			const t = n.trim();
+			if (t) names.push(t);
+		};
 		const re = /Config-Type:\s*(.+)/g;
 		let m;
 		while ((m = re.exec(text)) !== null) {
-			const name = m[1].trim();
-			if (name) names.push(name);
+			m[1].split(/[\s,;]+/).forEach(addName);
 		}
 		if (names.length > 0) return [...new Set(names)];
-		// Просто список class name (по одному на строку)
+		// Просто список class name (по одному на строку или через пробел/запятую)
 		text.split(/\n/).forEach(line => {
-			const name = line.trim();
-			if (name) names.push(name);
+			line.split(/[\s,;]+/).forEach(addName);
 		});
 		return [...new Set(names)];
 	}
