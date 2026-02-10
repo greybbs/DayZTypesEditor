@@ -284,8 +284,6 @@
 								<input type="number" id="fieldCost" min="0" step="1" data-field="cost">
 							</div>
 						</div>
-					</div>
-					<div class="editor-form-col">
 						<div class="form-section">
 							<h3>Flags</h3>
 							<div class="flags-grid">
@@ -297,22 +295,62 @@
 								<label><input type="checkbox" id="flagDeloot" data-flag="deloot"> deloot</label>
 							</div>
 						</div>
+					</div>
+					<div class="editor-form-col">
 						<div class="form-section">
 							<h3>category</h3>
-							<input type="text" id="fieldCategory" list="categoryList" data-field="category" placeholder="например: weapons">
-							<datalist id="categoryList"></datalist>
+							<div class="flags-grid category-grid">
+								<label><input type="radio" name="categoryOption" class="category-option" value="tools"> tools</label>
+								<label><input type="radio" name="categoryOption" class="category-option" value="containers"> containers</label>
+								<label><input type="radio" name="categoryOption" class="category-option" value="clothes"> clothes</label>
+								<label><input type="radio" name="categoryOption" class="category-option" value="lootdispatch"> lootdispatch</label>
+								<label><input type="radio" name="categoryOption" class="category-option" value="food"> food</label>
+								<label><input type="radio" name="categoryOption" class="category-option" value="weapons"> weapons</label>
+								<label><input type="radio" name="categoryOption" class="category-option" value="books"> books</label>
+								<label><input type="radio" name="categoryOption" class="category-option" value="explosives"> explosives</label>
+							</div>
+							<input type="hidden" id="fieldCategory" data-field="category">
 						</div>
 						<div class="form-section">
-							<h3>usage <span class="hint">(по одному на строку)</span></h3>
-							<textarea id="fieldUsage" rows="3" placeholder="Police&#10;Military" data-field="usage"></textarea>
+							<h3>tag</h3>
+							<div class="flags-grid tag-grid">
+								<label><input type="checkbox" class="tag-option" value="floor"> floor</label>
+								<label><input type="checkbox" class="tag-option" value="shelves"> shelves</label>
+								<label><input type="checkbox" class="tag-option" value="ground"> ground</label>
+							</div>
+							<textarea id="fieldTags" rows="3" style="display:none;" data-field="tags"></textarea>
 						</div>
 						<div class="form-section">
-							<h3>value <span class="hint"></span></h3>
+							<h3>usage</h3>
+							<div class="flags-grid usage-grid">
+								<label><input type="checkbox" class="usage-option" value="Military"> Military</label>
+								<label><input type="checkbox" class="usage-option" value="Police"> Police</label>
+								<label><input type="checkbox" class="usage-option" value="Medic"> Medic</label>
+								<label><input type="checkbox" class="usage-option" value="Firefighter"> Firefighter</label>
+								<label><input type="checkbox" class="usage-option" value="Industrial"> Industrial</label>
+								<label><input type="checkbox" class="usage-option" value="Farm"> Farm</label>
+								<label><input type="checkbox" class="usage-option" value="Coast"> Coast</label>
+								<label><input type="checkbox" class="usage-option" value="Town"> Town</label>
+								<label><input type="checkbox" class="usage-option" value="Village"> Village</label>
+								<label><input type="checkbox" class="usage-option" value="Hunting"> Hunting</label>
+								<label><input type="checkbox" class="usage-option" value="Office"> Office</label>
+								<label><input type="checkbox" class="usage-option" value="School"> School</label>
+								<label><input type="checkbox" class="usage-option" value="Prison"> Prison</label>
+								<label><input type="checkbox" class="usage-option" value="Lunapark"> Lunapark</label>
+								<label><input type="checkbox" class="usage-option" value="SeasonalEvent"> SeasonalEvent</label>
+								<label><input type="checkbox" class="usage-option" value="ContaminatedArea"> ContaminatedArea</label>
+								<label><input type="checkbox" class="usage-option" value="Historical"> Historical</label>
+							</div>
+							<textarea id="fieldUsage" rows="3" style="display:none;" data-field="usage"></textarea>
+						</div>
+						<div class="form-section">
+							<h3>value <span class="hint">	</span></h3>
 							<div class="flags-grid value-tiers">
 								<label><input type="checkbox" class="value-tier" value="Tier1"> Tier1</label>
 								<label><input type="checkbox" class="value-tier" value="Tier2"> Tier2</label>
 								<label><input type="checkbox" class="value-tier" value="Tier3"> Tier3</label>
 								<label><input type="checkbox" class="value-tier" value="Tier4"> Tier4</label>
+								<label><input type="checkbox" class="value-tier" value="Unique"> Unique</label>
 							</div>
 							<textarea id="fieldValue" rows="3" style="display:none;" data-field="value"></textarea>
 						</div>

@@ -101,10 +101,14 @@
 		quantmax: 'fieldQuantmax',
 		cost: 'fieldCost',
 		category: 'fieldCategory',
+		tags: 'fieldTags',
 		usage: 'fieldUsage',
 		value: 'fieldValue'
 	};
 	const valueTierCheckboxes = Array.from(document.querySelectorAll('.value-tier'));
+	const tagCheckboxes = Array.from(document.querySelectorAll('.tag-option'));
+	const categoryOptions = Array.from(document.querySelectorAll('.category-option'));
+	const usageCheckboxes = Array.from(document.querySelectorAll('.usage-option'));
 
 	function syncValueTiersFromTextarea() {
 		const valueEl = $(fieldIds.value);
@@ -130,6 +134,74 @@
 		cb.addEventListener('change', syncTextareaFromValueTiers);
 	});
 
+	function syncTagsFromTextarea() {
+		const tagsEl = $(fieldIds.tags);
+		if (!tagsEl || !tagCheckboxes.length) return;
+		const current = new Set(
+			tagsEl.value.split(/\n/).map(s => s.trim()).filter(Boolean)
+		);
+		tagCheckboxes.forEach(cb => {
+			cb.checked = current.has(cb.value);
+		});
+	}
+
+	function syncTextareaFromTags() {
+		const tagsEl = $(fieldIds.tags);
+		if (!tagsEl || !tagCheckboxes.length) return;
+		const selected = tagCheckboxes
+			.filter(cb => cb.checked)
+			.map(cb => cb.value);
+		tagsEl.value = selected.join('\n');
+	}
+
+	tagCheckboxes.forEach(cb => {
+		cb.addEventListener('change', syncTextareaFromTags);
+	});
+
+	function syncUsageFromTextarea() {
+		const usageEl = $(fieldIds.usage);
+		if (!usageEl || !usageCheckboxes.length) return;
+		const current = new Set(
+			usageEl.value.split(/\n/).map(s => s.trim()).filter(Boolean)
+		);
+		usageCheckboxes.forEach(cb => {
+			cb.checked = current.has(cb.value);
+		});
+	}
+
+	function syncTextareaFromUsage() {
+		const usageEl = $(fieldIds.usage);
+		if (!usageEl || !usageCheckboxes.length) return;
+		const selected = usageCheckboxes
+			.filter(cb => cb.checked)
+			.map(cb => cb.value);
+		usageEl.value = selected.join('\n');
+	}
+
+	usageCheckboxes.forEach(cb => {
+		cb.addEventListener('change', syncTextareaFromUsage);
+	});
+
+	function syncCategoryFromInput() {
+		const catEl = $(fieldIds.category);
+		if (!catEl || !categoryOptions.length) return;
+		const current = (catEl.value || '').trim();
+		categoryOptions.forEach(opt => {
+			opt.checked = opt.value === current;
+		});
+	}
+
+	function syncInputFromCategory() {
+		const catEl = $(fieldIds.category);
+		if (!catEl || !categoryOptions.length) return;
+		const selected = categoryOptions.find(opt => opt.checked);
+		catEl.value = selected ? selected.value : '';
+	}
+
+	categoryOptions.forEach(opt => {
+		opt.addEventListener('change', syncInputFromCategory);
+	});
+
 	function parseTypeNode(typeEl) {
 		const name = typeEl.getAttribute('name') || '';
 		const getText = (tag) => {
@@ -152,6 +224,8 @@
 		}
 		const categoryEl = typeEl.querySelector('category');
 		const category = categoryEl ? (categoryEl.getAttribute('name') || '') : '';
+		const tagEls = typeEl.querySelectorAll('tag');
+		const tags = Array.from(tagEls).map(t => t.getAttribute('name') || '').filter(Boolean);
 		const usageEls = typeEl.querySelectorAll('usage');
 		const usage = Array.from(usageEls).map(u => u.getAttribute('name') || '').filter(Boolean);
 		const valueEls = typeEl.querySelectorAll('value');
@@ -168,6 +242,7 @@
 			cost: getText('cost'),
 			flags,
 			category,
+			tags,
 			usage,
 			value
 		};
@@ -561,9 +636,26 @@
 			if (fillWithDefaults) f.oninput = () => { clearDefaultHighlight(f); f.oninput = null; };
 		});
 		const catEl = $(fieldIds.category);
-		if (catEl) { catEl.value = fillWithDefaults ? (src.category || '') : (t.category || ''); catEl.classList.toggle('field-default-filled', fillWithDefaults); if (fillWithDefaults) catEl.oninput = () => { clearDefaultHighlight(catEl); catEl.oninput = null; }; }
+		if (catEl) {
+			catEl.value = fillWithDefaults ? (src.category || '') : (t.category || '');
+			catEl.classList.toggle('field-default-filled', fillWithDefaults);
+			if (fillWithDefaults) catEl.oninput = () => { clearDefaultHighlight(catEl); catEl.oninput = null; };
+			syncCategoryFromInput();
+		}
+		const tagsEl = $(fieldIds.tags);
+		if (tagsEl) {
+			tagsEl.value = fillWithDefaults ? (src.tags || []).join('\n') : (t.tags || []).join('\n');
+			tagsEl.classList.toggle('field-default-filled', fillWithDefaults);
+			if (fillWithDefaults) tagsEl.oninput = () => { clearDefaultHighlight(tagsEl); tagsEl.oninput = null; };
+			syncTagsFromTextarea();
+		}
 		const usageEl = $(fieldIds.usage);
-		if (usageEl) { usageEl.value = fillWithDefaults ? (src.usage || []).join('\n') : (t.usage || []).join('\n'); usageEl.classList.toggle('field-default-filled', fillWithDefaults); if (fillWithDefaults) usageEl.oninput = () => { clearDefaultHighlight(usageEl); usageEl.oninput = null; }; }
+		if (usageEl) {
+			usageEl.value = fillWithDefaults ? (src.usage || []).join('\n') : (t.usage || []).join('\n');
+			usageEl.classList.toggle('field-default-filled', fillWithDefaults);
+			if (fillWithDefaults) usageEl.oninput = () => { clearDefaultHighlight(usageEl); usageEl.oninput = null; };
+			syncUsageFromTextarea();
+		}
 		const valueEl = $(fieldIds.value);
 		if (valueEl) {
 			valueEl.value = fillWithDefaults ? (src.value || []).join('\n') : (t.value || []).join('\n');
@@ -603,6 +695,7 @@
 			if (f && f.dataset.field) data[f.dataset.field] = f.value.trim();
 		});
 		data.category = $(fieldIds.category).value.trim();
+		data.tags = $(fieldIds.tags).value.split(/\n/).map(s => s.trim()).filter(Boolean);
 		data.usage = $(fieldIds.usage).value.split(/\n/).map(s => s.trim()).filter(Boolean);
 		data.value = $(fieldIds.value).value.split(/\n/).map(s => s.trim()).filter(Boolean);
 		Object.keys(FLAG_IDS).forEach(flagKey => {
@@ -952,6 +1045,9 @@
 			const f = t.flags || {};
 			lines.push('\t\t<flags count_in_cargo="' + (f.count_in_cargo || '0') + '" count_in_hoarder="' + (f.count_in_hoarder || '0') + '" count_in_map="' + (f.count_in_map || '0') + '" count_in_player="' + (f.count_in_player || '0') + '" crafted="' + (f.crafted || '0') + '" deloot="' + (f.deloot || '0') + '" />');
 			if (String(t.category || '').trim()) lines.push('\t\t<category name="' + escapeXmlAttr(t.category) + '" />');
+			(t.tags || []).filter(tag => String(tag || '').trim()).forEach(tag => {
+				lines.push('\t\t<tag name="' + escapeXmlAttr(tag) + '" />');
+			});
 			(t.usage || []).filter(u => String(u || '').trim()).forEach(u => lines.push('\t\t<usage name="' + escapeXmlAttr(u) + '" />'));
 			(t.value || []).filter(v => String(v || '').trim()).forEach(v => lines.push('\t\t<value name="' + escapeXmlAttr(v) + '" />'));
 			lines.push('\t</type>');
@@ -977,6 +1073,7 @@
 		cost: '100',
 		flags: { count_in_cargo: '0', count_in_hoarder: '0', count_in_map: '1', count_in_player: '0', crafted: '0', deloot: '0' },
 		category: '',
+		tags: [],
 		usage: [],
 		value: []
 	};
@@ -1010,6 +1107,7 @@
 			cost: DEFAULT_TYPE.cost,
 			flags: { ...DEFAULT_TYPE.flags },
 			category: DEFAULT_TYPE.category,
+			tags: [...DEFAULT_TYPE.tags],
 			usage: [...DEFAULT_TYPE.usage],
 			value: [...DEFAULT_TYPE.value]
 		};
