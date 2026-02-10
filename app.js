@@ -111,6 +111,9 @@
 	const tagCheckboxes = Array.from(document.querySelectorAll('.tag-option'));
 	const categoryOptions = Array.from(document.querySelectorAll('.category-option'));
 	const usageCheckboxes = Array.from(document.querySelectorAll('.usage-option'));
+	const bulkCategoryOptions = Array.from(document.querySelectorAll('.bulk-category-option'));
+	const bulkUsageCheckboxes = Array.from(document.querySelectorAll('.bulk-usage-option'));
+	const bulkValueTierCheckboxes = Array.from(document.querySelectorAll('.bulk-value-tier'));
 	let vanillaTypesMap = null;
 
 	function syncValueTiersFromTextarea() {
@@ -183,6 +186,74 @@
 
 	usageCheckboxes.forEach(cb => {
 		cb.addEventListener('change', syncTextareaFromUsage);
+	});
+
+	function syncBulkCategoryFromInput() {
+		const catEl = $('bulkCategory');
+		if (!catEl || !bulkCategoryOptions.length) return;
+		const current = (catEl.value || '').trim();
+		bulkCategoryOptions.forEach(opt => {
+			opt.checked = opt.value === current;
+		});
+	}
+
+	function syncBulkInputFromCategory() {
+		const catEl = $('bulkCategory');
+		if (!catEl || !bulkCategoryOptions.length) return;
+		const selected = bulkCategoryOptions.find(opt => opt.checked);
+		catEl.value = selected ? selected.value : '';
+	}
+
+	bulkCategoryOptions.forEach(opt => {
+		opt.addEventListener('change', syncBulkInputFromCategory);
+	});
+
+	function syncBulkUsageFromTextarea() {
+		const usageEl = $('bulkUsage');
+		if (!usageEl || !bulkUsageCheckboxes.length) return;
+		const current = new Set(
+			usageEl.value.split(/\n/).map(s => s.trim()).filter(Boolean)
+		);
+		bulkUsageCheckboxes.forEach(cb => {
+			cb.checked = current.has(cb.value);
+		});
+	}
+
+	function syncBulkTextareaFromUsage() {
+		const usageEl = $('bulkUsage');
+		if (!usageEl || !bulkUsageCheckboxes.length) return;
+		const selected = bulkUsageCheckboxes
+			.filter(cb => cb.checked)
+			.map(cb => cb.value);
+		usageEl.value = selected.join('\n');
+	}
+
+	bulkUsageCheckboxes.forEach(cb => {
+		cb.addEventListener('change', syncBulkTextareaFromUsage);
+	});
+
+	function syncBulkValueFromTextarea() {
+		const valueEl = $('bulkValue');
+		if (!valueEl || !bulkValueTierCheckboxes.length) return;
+		const current = new Set(
+			valueEl.value.split(/\n/).map(s => s.trim()).filter(Boolean)
+		);
+		bulkValueTierCheckboxes.forEach(cb => {
+			cb.checked = current.has(cb.value);
+		});
+	}
+
+	function syncBulkTextareaFromValue() {
+		const valueEl = $('bulkValue');
+		if (!valueEl || !bulkValueTierCheckboxes.length) return;
+		const selected = bulkValueTierCheckboxes
+			.filter(cb => cb.checked)
+			.map(cb => cb.value);
+		valueEl.value = selected.join('\n');
+	}
+
+	bulkValueTierCheckboxes.forEach(cb => {
+		cb.addEventListener('change', syncBulkTextareaFromValue);
 	});
 
 	function normalizeTypeForCompare(t) {
@@ -629,22 +700,29 @@
 		$('bulkApplyNominal').checked = false;
 		$('bulkApplyMin').checked = false;
 		$('bulkApplyLifetime').checked = false;
+		$('bulkApplyRestock').checked = false;
+		$('bulkApplyQuantmin').checked = false;
+		$('bulkApplyQuantmax').checked = false;
+		$('bulkApplyCost').checked = false;
+		$('bulkApplyFlags').checked = false;
+		$('bulkApplyTags').checked = false;
 		$('bulkApplyCategory').checked = false;
 		$('bulkApplyUsage').checked = false;
 		$('bulkApplyValue').checked = false;
 		$('bulkNominal').value = '';
 		$('bulkMin').value = '';
 		$('bulkLifetime').value = '';
+		$('bulkRestock').value = '';
+		$('bulkQuantmin').value = '';
+		$('bulkQuantmax').value = '';
+		$('bulkCost').value = '';
 		$('bulkCategory').value = '';
 		$('bulkUsage').value = '';
 		$('bulkValue').value = '';
-		const list = $('bulkCategoryList');
-		list.innerHTML = '';
-		Array.from(categoriesSet).sort().forEach(c => {
-			const opt = document.createElement('option');
-			opt.value = c;
-			list.appendChild(opt);
-		});
+		document.querySelectorAll('#bulkModal .bulk-tag-option').forEach(cb => { cb.checked = false; });
+		bulkCategoryOptions.forEach(opt => { opt.checked = false; });
+		bulkUsageCheckboxes.forEach(cb => { cb.checked = false; });
+		bulkValueTierCheckboxes.forEach(cb => { cb.checked = false; });
 		bulkModal.classList.remove('hidden');
 	});
 
@@ -652,19 +730,45 @@
 		const applyNominal = $('bulkApplyNominal').checked;
 		const applyMin = $('bulkApplyMin').checked;
 		const applyLifetime = $('bulkApplyLifetime').checked;
+		const applyRestock = $('bulkApplyRestock').checked;
+		const applyQuantmin = $('bulkApplyQuantmin').checked;
+		const applyQuantmax = $('bulkApplyQuantmax').checked;
+		const applyCost = $('bulkApplyCost').checked;
+		const applyFlags = $('bulkApplyFlags').checked;
+		const applyTags = $('bulkApplyTags').checked;
 		const applyCategory = $('bulkApplyCategory').checked;
 		const applyUsage = $('bulkApplyUsage').checked;
 		const applyValue = $('bulkApplyValue').checked;
-		if (!applyNominal && !applyMin && !applyLifetime && !applyCategory && !applyUsage && !applyValue) {
+		if (
+			!applyNominal && !applyMin && !applyLifetime &&
+			!applyRestock && !applyQuantmin && !applyQuantmax && !applyCost &&
+			!applyFlags && !applyTags &&
+			!applyCategory && !applyUsage && !applyValue
+		) {
 			showToast('Отметьте хотя бы одно поле.', 'error');
 			return;
 		}
 		const nominal = $('bulkNominal').value.trim();
 		const min = $('bulkMin').value.trim();
 		const lifetime = $('bulkLifetime').value.trim();
+		const restock = $('bulkRestock').value.trim();
+		const quantmin = $('bulkQuantmin').value.trim();
+		const quantmax = $('bulkQuantmax').value.trim();
+		const cost = $('bulkCost').value.trim();
 		const category = $('bulkCategory').value.trim();
 		const usage = $('bulkUsage').value.split(/\n/).map(s => s.trim()).filter(Boolean);
 		const value = $('bulkValue').value.split(/\n/).map(s => s.trim()).filter(Boolean);
+		const bulkFlags = {
+			count_in_cargo: $('bulkFlagCargo')?.checked ? '1' : '0',
+			count_in_hoarder: $('bulkFlagHoarder')?.checked ? '1' : '0',
+			count_in_map: $('bulkFlagMap')?.checked ? '1' : '0',
+			count_in_player: $('bulkFlagPlayer')?.checked ? '1' : '0',
+			crafted: $('bulkFlagCrafted')?.checked ? '1' : '0',
+			deloot: $('bulkFlagDeloot')?.checked ? '1' : '0'
+		};
+		const bulkTags = Array.from(document.querySelectorAll('#bulkModal .bulk-tag-option'))
+			.filter(cb => cb.checked)
+			.map(cb => cb.value);
 		let count = 0;
 		selectedIndices.forEach(idx => {
 			const t = types[idx];
@@ -672,6 +776,12 @@
 			if (applyNominal && nominal !== '') t.nominal = nominal;
 			if (applyMin && min !== '') t.min = min;
 			if (applyLifetime && lifetime !== '') t.lifetime = lifetime;
+			if (applyRestock && restock !== '') t.restock = restock;
+			if (applyQuantmin && quantmin !== '') t.quantmin = quantmin;
+			if (applyQuantmax && quantmax !== '') t.quantmax = quantmax;
+			if (applyCost && cost !== '') t.cost = cost;
+			if (applyFlags) t.flags = { ...t.flags, ...bulkFlags };
+			if (applyTags) t.tags = bulkTags.slice();
 			if (applyCategory) t.category = category;
 			if (applyUsage) t.usage = usage.slice();
 			if (applyValue) t.value = value.slice();

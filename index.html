@@ -219,38 +219,111 @@
 
 	<!-- Modal: массовое изменение -->
 	<div class="modal-overlay hidden" id="bulkModal">
-		<div class="modal modal-wide">
+		<div class="modal" id="bulkModalContent">
 			<div class="modal-header">
 				<h2>Массовое изменение</h2>
 				<button type="button" id="closeBulkModal" class="btn-icon" title="Закрыть">×</button>
 			</div>
 			<div class="modal-body">
 				<p class="bulk-hint">Отметьте поля, которые нужно изменить у выбранных типов. Остальные поля не трогаются.</p>
-				<div class="bulk-form">
-					<div class="bulk-field">
-						<label><input type="checkbox" id="bulkApplyNominal"> nominal</label>
-						<input type="number" id="bulkNominal" min="0" placeholder="—">
+				<div class="editor-form-columns">
+					<div class="editor-form-col">
+						<div class="form-section">
+							<h3>Основные</h3>
+							<div class="form-grid">
+								<label><input type="checkbox" id="bulkApplyNominal"> nominal <span class="hint">(число)</span></label>
+								<input type="number" id="bulkNominal" min="0" step="1" placeholder="—">
+								<label><input type="checkbox" id="bulkApplyLifetime"> lifetime <span class="hint">(сек)</span></label>
+								<input type="number" id="bulkLifetime" min="0" step="1" placeholder="—">
+								<label><input type="checkbox" id="bulkApplyRestock"> restock</label>
+								<input type="number" id="bulkRestock" min="0" step="1" placeholder="—">
+								<label><input type="checkbox" id="bulkApplyMin"> min</label>
+								<input type="number" id="bulkMin" min="0" step="1" placeholder="—">
+								<label><input type="checkbox" id="bulkApplyQuantmin"> quantmin</label>
+								<input type="number" id="bulkQuantmin" min="-1" step="1" placeholder="—">
+								<label><input type="checkbox" id="bulkApplyQuantmax"> quantmax</label>
+								<input type="number" id="bulkQuantmax" min="-1" step="1" placeholder="—">
+								<label><input type="checkbox" id="bulkApplyCost"> cost</label>
+								<input type="number" id="bulkCost" min="0" step="1" placeholder="—">
+							</div>
+						</div>
+						<div class="form-section">
+							<h3><label><input type="checkbox" id="bulkApplyFlags"> Flags</label></h3>
+							<div class="flags-grid">
+								<label><input type="checkbox" id="bulkFlagCargo" data-flag="count_in_cargo"> count_in_cargo</label>
+								<label><input type="checkbox" id="bulkFlagHoarder" data-flag="count_in_hoarder"> count_in_hoarder</label>
+								<label><input type="checkbox" id="bulkFlagMap" data-flag="count_in_map"> count_in_map</label>
+								<label><input type="checkbox" id="bulkFlagPlayer" data-flag="count_in_player"> count_in_player</label>
+								<label><input type="checkbox" id="bulkFlagCrafted" data-flag="crafted"> crafted</label>
+								<label><input type="checkbox" id="bulkFlagDeloot" data-flag="deloot"> deloot</label>
+							</div>
+						</div>
 					</div>
-					<div class="bulk-field">
-						<label><input type="checkbox" id="bulkApplyMin"> min</label>
-						<input type="number" id="bulkMin" min="0" placeholder="—">
-					</div>
-					<div class="bulk-field">
-						<label><input type="checkbox" id="bulkApplyLifetime"> lifetime</label>
-						<input type="number" id="bulkLifetime" min="0" placeholder="—">
-					</div>
-					<div class="bulk-field">
-						<label><input type="checkbox" id="bulkApplyCategory"> category</label>
-						<input type="text" id="bulkCategory" list="bulkCategoryList" placeholder="—">
-						<datalist id="bulkCategoryList"></datalist>
-					</div>
-					<div class="bulk-field">
-						<label><input type="checkbox" id="bulkApplyUsage"> usage</label>
-						<textarea id="bulkUsage" rows="2" placeholder="По одному на строку"></textarea>
-					</div>
-					<div class="bulk-field">
-						<label><input type="checkbox" id="bulkApplyValue"> value</label>
-						<textarea id="bulkValue" rows="2" placeholder="По одному на строку"></textarea>
+					<div class="editor-form-col">
+						<div class="form-section">
+							<h3><label><input type="checkbox" id="bulkApplyCategory"> category</label></h3>
+							<div class="bulk-form">
+								<div class="flags-grid category-grid">
+									<label><input type="radio" name="bulkCategoryOption" class="bulk-category-option" value="tools"> tools</label>
+									<label><input type="radio" name="bulkCategoryOption" class="bulk-category-option" value="containers"> containers</label>
+									<label><input type="radio" name="bulkCategoryOption" class="bulk-category-option" value="clothes"> clothes</label>
+									<label><input type="radio" name="bulkCategoryOption" class="bulk-category-option" value="lootdispatch"> lootdispatch</label>
+									<label><input type="radio" name="bulkCategoryOption" class="bulk-category-option" value="food"> food</label>
+									<label><input type="radio" name="bulkCategoryOption" class="bulk-category-option" value="weapons"> weapons</label>
+									<label><input type="radio" name="bulkCategoryOption" class="bulk-category-option" value="books"> books</label>
+									<label><input type="radio" name="bulkCategoryOption" class="bulk-category-option" value="explosives"> explosives</label>
+								</div>
+								<input type="hidden" id="bulkCategory">
+							</div>
+						</div>
+						<div class="form-section">
+							<h3><label><input type="checkbox" id="bulkApplyTags"> tag</label></h3>
+							<div class="bulk-form">
+								<div class="flags-grid tag-grid">
+									<label><input type="checkbox" class="bulk-tag-option" value="floor"> floor</label>
+									<label><input type="checkbox" class="bulk-tag-option" value="shelves"> shelves</label>
+									<label><input type="checkbox" class="bulk-tag-option" value="ground"> ground</label>
+								</div>
+							</div>
+						</div>
+						<div class="form-section">
+							<h3><label><input type="checkbox" id="bulkApplyUsage"> usage</label></h3>
+							<div class="bulk-form">
+								<div class="flags-grid usage-grid">
+									<label><input type="checkbox" class="bulk-usage-option" value="Military"> Military</label>
+									<label><input type="checkbox" class="bulk-usage-option" value="Police"> Police</label>
+									<label><input type="checkbox" class="bulk-usage-option" value="Medic"> Medic</label>
+									<label><input type="checkbox" class="bulk-usage-option" value="Firefighter"> Firefighter</label>
+									<label><input type="checkbox" class="bulk-usage-option" value="Industrial"> Industrial</label>
+									<label><input type="checkbox" class="bulk-usage-option" value="Farm"> Farm</label>
+									<label><input type="checkbox" class="bulk-usage-option" value="Coast"> Coast</label>
+									<label><input type="checkbox" class="bulk-usage-option" value="Town"> Town</label>
+									<label><input type="checkbox" class="bulk-usage-option" value="Village"> Village</label>
+									<label><input type="checkbox" class="bulk-usage-option" value="Hunting"> Hunting</label>
+									<label><input type="checkbox" class="bulk-usage-option" value="Office"> Office</label>
+									<label><input type="checkbox" class="bulk-usage-option" value="School"> School</label>
+									<label><input type="checkbox" class="bulk-usage-option" value="Prison"> Prison</label>
+									<label><input type="checkbox" class="bulk-usage-option" value="Lunapark"> Lunapark</label>
+									<label><input type="checkbox" class="bulk-usage-option" value="SeasonalEvent"> SeasonalEvent</label>
+									<label><input type="checkbox" class="bulk-usage-option" value="ContaminatedArea"> ContaminatedArea</label>
+									<label><input type="checkbox" class="bulk-usage-option" value="Historical"> Historical</label>
+								</div>
+								<textarea id="bulkUsage" rows="2" style="display:none;"></textarea>
+							</div>
+						</div>
+						<div class="form-section">
+							<h3><label><input type="checkbox" id="bulkApplyValue"> value</label></h3>
+							<div class="bulk-form">
+								<div class="flags-grid value-tiers">
+									<label><input type="checkbox" class="bulk-value-tier" value="Tier1"> Tier1</label>
+									<label><input type="checkbox" class="bulk-value-tier" value="Tier2"> Tier2</label>
+									<label><input type="checkbox" class="bulk-value-tier" value="Tier3"> Tier3</label>
+									<label><input type="checkbox" class="bulk-value-tier" value="Tier4"> Tier4</label>
+									<label><input type="checkbox" class="bulk-value-tier" value="Unique"> Unique</label>
+								</div>
+								<textarea id="bulkValue" rows="2" style="display:none;"></textarea>
+							</div>
+						</div>
 					</div>
 				</div>
 				<div class="modal-actions">

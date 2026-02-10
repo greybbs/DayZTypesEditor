@@ -619,6 +619,11 @@ label.btn.disabled {
 	max-width: 1100px;
 }
 
+#bulkModal .modal {
+	padding: 0;
+	max-width: 1100px;
+}
+
 #editorModal .editor-form {
 	padding: 1.25rem;
 }
@@ -937,6 +942,13 @@ label.btn.disabled {
 	color: var(--text-muted);
 }
 
+.form-section h3 > label {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.4rem;
+	cursor: pointer;
+}
+
 .hint {
 	font-weight: 400;
 	color: var(--text-muted);
@@ -955,7 +967,8 @@ label.btn.disabled {
 	font-size: 0.9rem;
 }
 
-.form-grid input {
+.form-grid input[type="number"],
+.form-grid input[type="text"] {
 	width: 100%;
 	min-width: 0;
 	padding: 0.5rem 0.75rem;
@@ -966,7 +979,8 @@ label.btn.disabled {
 	font-family: var(--font-mono);
 }
 
-.form-grid input:invalid {
+.form-grid input[type="number"]:invalid,
+.form-grid input[type="text"]:invalid {
 	border-color: var(--error);
 }
 
@@ -1007,6 +1021,10 @@ label.btn.disabled {
 	cursor: pointer;
 	font-family: var(--font-mono);
 	font-size: 0.85rem;
+	padding: 0.25rem 0.5rem;
+	border-radius: var(--radius);
+	border: 1px solid var(--accent);
+	background: rgba(90, 143, 94, 0.05);
 }
 
 .category-grid label,
