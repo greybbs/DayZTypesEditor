@@ -920,66 +920,82 @@
 		errorCount.classList.toggle('hidden', errTotal === 0);
 	}
 
+	function parseErrorFields(errors) {
+		const fields = new Set();
+		errors.forEach(msg => {
+			const m = msg.match(/^(nominal|lifetime|restock|min|quantmin|quantmax|cost):/);
+			if (m) { fields.add(m[1]); return; }
+			const fm = msg.match(/^flags\.(\w+):/);
+			if (fm) { fields.add('flags.' + fm[1]); return; }
+			if (msg.includes('quantmax') && msg.includes('quantmin')) {
+				fields.add('quantmin');
+				fields.add('quantmax');
+			}
+		});
+		return Array.from(fields);
+	}
+
 	function selectType(index, options) {
 		selectedIndex = index;
 		tableBody.querySelectorAll('tr').forEach(tr => tr.classList.toggle('active', parseInt(tr.dataset.index, 10) === index));
 		const t = types[index];
 		if (!t) return;
 		editorModal.classList.remove('hidden');
-		const fillWithDefaults = options && options.fillWithDefaults;
-		const src = fillWithDefaults ? DEFAULT_TYPE : t;
-		const clearDefaultHighlight = (el) => { if (el) el.classList.remove('field-default-filled'); };
+		const highlightErrors = options && options.highlightErrors || [];
+		const clearErrorHighlight = (el) => { if (el) el.classList.remove('field-error'); };
 		$(fieldIds.name).value = t.name || '';
 		numberFields.forEach(id => {
 			const f = $(id);
 			if (!f) return;
 			const key = f.dataset.field;
-			f.value = (fillWithDefaults ? src[key] : t[key]) ?? '';
-			f.classList.toggle('field-default-filled', fillWithDefaults);
-			if (fillWithDefaults) f.oninput = () => { clearDefaultHighlight(f); f.oninput = null; };
+			f.value = (t[key] ?? '');
+			const hasError = highlightErrors.includes(key);
+			f.classList.toggle('field-error', hasError);
+			const label = f.previousElementSibling;
+			if (label && label.matches('label')) label.classList.toggle('field-error', hasError);
+			if (hasError) {
+				f.oninput = () => { clearErrorHighlight(f); if (label) clearErrorHighlight(label); f.oninput = null; };
+			}
 		});
 		const catEl = $(fieldIds.category);
 		if (catEl) {
-			catEl.value = fillWithDefaults ? (src.category || '') : (t.category || '');
-			catEl.classList.toggle('field-default-filled', fillWithDefaults);
-			if (fillWithDefaults) catEl.oninput = () => { clearDefaultHighlight(catEl); catEl.oninput = null; };
+			catEl.value = (t.category || '');
 			syncCategoryFromInput();
 		}
 		const tagsEl = $(fieldIds.tags);
 		if (tagsEl) {
-			tagsEl.value = fillWithDefaults ? (src.tags || []).join('\n') : (t.tags || []).join('\n');
-			tagsEl.classList.toggle('field-default-filled', fillWithDefaults);
-			if (fillWithDefaults) tagsEl.oninput = () => { clearDefaultHighlight(tagsEl); tagsEl.oninput = null; };
+			tagsEl.value = (t.tags || []).join('\n');
 			syncTagsFromTextarea();
 		}
 		const usageEl = $(fieldIds.usage);
 		if (usageEl) {
-			usageEl.value = fillWithDefaults ? (src.usage || []).join('\n') : (t.usage || []).join('\n');
-			usageEl.classList.toggle('field-default-filled', fillWithDefaults);
-			if (fillWithDefaults) usageEl.oninput = () => { clearDefaultHighlight(usageEl); usageEl.oninput = null; };
+			usageEl.value = (t.usage || []).join('\n');
 			syncUsageFromTextarea();
 		}
 		const valueEl = $(fieldIds.value);
 		if (valueEl) {
-			valueEl.value = fillWithDefaults ? (src.value || []).join('\n') : (t.value || []).join('\n');
-			valueEl.classList.toggle('field-default-filled', fillWithDefaults);
-			if (fillWithDefaults) valueEl.oninput = () => { clearDefaultHighlight(valueEl); valueEl.oninput = null; };
-			// Обновляем чекбоксы тиров по текущему значению
+			valueEl.value = (t.value || []).join('\n');
 			syncValueTiersFromTextarea();
 		}
 		Object.keys(FLAG_IDS).forEach(flagKey => {
 			const cb = $(FLAG_IDS[flagKey]);
 			if (cb) {
-				cb.checked = (fillWithDefaults ? src.flags[flagKey] : t.flags[flagKey]) === '1';
+				cb.checked = (t.flags && t.flags[flagKey]) === '1';
 				const label = cb.closest('label');
+				const hasError = highlightErrors.includes('flags.' + flagKey);
 				if (label) {
-					label.classList.toggle('field-default-filled', fillWithDefaults);
-					if (fillWithDefaults) cb.onchange = () => { clearDefaultHighlight(label); cb.onchange = null; };
+					label.classList.toggle('field-error', hasError);
+					if (hasError) cb.onchange = () => { clearErrorHighlight(label); cb.onchange = null; };
 				}
 			}
 		});
-		formErrors.classList.add('empty');
-		formErrors.textContent = '';
+		if (highlightErrors.length && formErrors) {
+			formErrors.classList.remove('empty');
+			formErrors.textContent = 'Ошибки в полях: ' + highlightErrors.join(', ');
+		} else if (formErrors) {
+			formErrors.classList.add('empty');
+			formErrors.textContent = '';
+		}
 	}
 
 	function closeEditorPanel() {
@@ -1526,7 +1542,7 @@
 			errorsList.innerHTML = '';
 			if (fixAllErrorsBtn) fixAllErrorsBtn.style.display = 'none';
 		} else {
-			errorsHint.textContent = `Найдено ${total} ошибок в ${byType.length} типах. Клик — открыть редактор с подставленными значениями по умолчанию, нажмите «Сохранить» для применения.`;
+			errorsHint.textContent = `Найдено ${total} ошибок в ${byType.length} типах. Клик — открыть редактор, проблемные поля подсвечены красным.`;
 			const fragment = document.createDocumentFragment();
 			byType.forEach(({ name, index, errors }) => {
 				const div = document.createElement('div');
@@ -1535,7 +1551,7 @@
 				div.innerHTML = '<span class="error-group-name">' + escapeHtml(name) + '</span><div class="error-group-errors">' + escapeHtml(errors.join('; ')) + '</div>';
 				div.addEventListener('click', () => {
 					errorsModal.classList.add('hidden');
-					selectType(index, { fillWithDefaults: true });
+					selectType(index, { highlightErrors: parseErrorFields(errors) });
 				});
 				fragment.appendChild(div);
 			});
@@ -1544,6 +1560,29 @@
 			if (fixAllErrorsBtn) fixAllErrorsBtn.style.display = '';
 		}
 		errorsModal.classList.remove('hidden');
+	}
+
+	function fillMissingFields(t) {
+		const numFields = ['nominal','lifetime','restock','min','quantmin','quantmax','cost'];
+		const defs = { nominal: 0, lifetime: 0, restock: 0, min: 0, quantmin: -1, quantmax: -1, cost: 0 };
+		numFields.forEach(key => {
+			const v = String(t[key] ?? '').trim();
+			const n = parseInt(v, 10);
+			const minVal = defs[key];
+			const needFix = v === '' || isNaN(n) || n < minVal;
+			if (needFix) t[key] = DEFAULT_TYPE[key];
+		});
+		const qmin = parseInt(t.quantmin, 10);
+		const qmax = parseInt(t.quantmax, 10);
+		if (!isNaN(qmin) && !isNaN(qmax) && qmin !== -1 && qmax !== -1 && qmax < qmin) {
+			t.quantmax = t.quantmin;
+		}
+		const flags = t.flags || {};
+		['count_in_cargo','count_in_hoarder','count_in_map','count_in_player','crafted','deloot'].forEach(k => {
+			const v = flags[k];
+			if (v !== '0' && v !== '1') flags[k] = DEFAULT_TYPE.flags[k];
+		});
+		t.flags = flags;
 	}
 
 	function fixAllErrors() {
@@ -1559,17 +1598,7 @@
 		errorIndices.forEach(idx => {
 			const t = types[idx];
 			if (!t) return;
-			t.nominal = DEFAULT_TYPE.nominal;
-			t.lifetime = DEFAULT_TYPE.lifetime;
-			t.restock = DEFAULT_TYPE.restock;
-			t.min = DEFAULT_TYPE.min;
-			t.quantmin = DEFAULT_TYPE.quantmin;
-			t.quantmax = DEFAULT_TYPE.quantmax;
-			t.cost = DEFAULT_TYPE.cost;
-			t.flags = { ...DEFAULT_TYPE.flags };
-			if (!DEFAULT_TYPE.category) t.category = '';
-			if (DEFAULT_TYPE.usage.length === 0) t.usage = [];
-			if (DEFAULT_TYPE.value.length === 0) t.value = [];
+			fillMissingFields(t);
 		});
 		renderCategoryFilter();
 		renderTable();
