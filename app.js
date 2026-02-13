@@ -53,10 +53,7 @@
 	const closeErrorsModal = $('closeErrorsModal');
 	const closeErrorsBtn = $('closeErrorsBtn');
 	const fixAllErrorsBtn = $('fixAllErrorsBtn');
-	const bulkBar = $('bulkBar');
-	const bulkCount = $('bulkCount');
 	const bulkEditBtn = $('bulkEditBtn');
-	const bulkClearBtn = $('bulkClearBtn');
 	const selectAllCheckbox = $('selectAllCheckbox');
 	const bulkModal = $('bulkModal');
 	const closeBulkModal = $('closeBulkModal');
@@ -622,13 +619,16 @@
 	}
 
 	function updateBulkBar() {
-		if (selectedIndices.size > 0) {
-			bulkBar.classList.remove('hidden');
-			bulkCount.textContent = 'Выбрано: ' + selectedIndices.size;
-		} else {
-			bulkBar.classList.add('hidden');
+		if (selectAllCheckbox) {
+			const filtered = getFilteredTypes();
+			selectAllCheckbox.checked = filtered.length > 0 && filtered.every(({ t }) => selectedIndices.has(types.indexOf(t)));
+			selectAllCheckbox.indeterminate = filtered.some(({ t }) => selectedIndices.has(types.indexOf(t))) && !selectAllCheckbox.checked;
 		}
-		if (selectAllCheckbox) selectAllCheckbox.checked = types.length > 0 && getFilteredTypes().every(({ t }) => selectedIndices.has(types.indexOf(t)));
+		const selCount = $('selectedCount');
+		if (selCount) {
+			selCount.textContent = selectedIndices.size + ' выделено';
+			selCount.classList.toggle('hidden', selectedIndices.size === 0);
+		}
 	}
 
 	function makeDataRow(t, globalIndex, err, isSelected) {
@@ -732,10 +732,12 @@
 		contextMenuTargetIndex = rowIndex;
 		contextMenu.style.left = x + 'px';
 		contextMenu.style.top = y + 'px';
-		if (contextBulkEdit) {
-			// Кнопка массового изменения только когда выбрано больше одного элемента
-			contextBulkEdit.classList.toggle('hidden', selectedIndices.size <= 1);
-		}
+		const hasSelection = selectedIndices.size > 0;
+		const sep = $('contextSep');
+		if (sep) sep.style.display = hasSelection ? '' : 'none';
+		if (contextBulkEdit) contextBulkEdit.style.display = hasSelection ? '' : 'none';
+		const ctxClear = $('contextClearSelection');
+		if (ctxClear) ctxClear.style.display = hasSelection ? '' : 'none';
 		contextMenu.classList.remove('hidden');
 	}
 
@@ -746,7 +748,7 @@
 	function deleteTypes(indices) {
 		const sorted = Array.from(indices).sort((a, b) => b - a);
 		sorted.forEach(idx => types.splice(idx, 1));
-		selectedIndices.clear();
+		clearSelection();
 		renderCategoryFilter();
 		renderTable();
 		renderStats();
@@ -762,6 +764,7 @@
 			const t = types[idx];
 			if (t) { t.min = '0'; t.nominal = '0'; }
 		});
+		clearSelection();
 		renderTable();
 		renderStats();
 		if (indices.size > 0) showToast('Убрано из спавна: ' + indices.size, 'success');
@@ -778,20 +781,17 @@
 	if (contextBulkEdit) {
 		contextBulkEdit.addEventListener('click', () => {
 			hideContextMenu();
-			if (selectedIndices.size > 1) {
-				bulkEditBtn.click();
-			}
+			if (selectedIndices.size > 0) bulkEditBtn.click();
 		});
 	}
+	$('contextClearSelection')?.addEventListener('click', () => {
+		hideContextMenu();
+		clearSelection();
+		renderTable();
+	});
 
 	document.addEventListener('click', () => hideContextMenu());
 	contextMenu.addEventListener('click', (e) => e.stopPropagation());
-
-	bulkClearBtn.addEventListener('click', () => {
-		selectedIndices.clear();
-		updateBulkBar();
-		renderTable();
-	});
 
 	bulkEditBtn.addEventListener('click', () => {
 		if (selectedIndices.size === 0) return;
@@ -887,11 +887,11 @@
 			count++;
 		});
 		bulkModal.classList.add('hidden');
+		clearSelection();
 		renderCategoryFilter();
 		renderTable();
 		renderStats();
 		fillCategoryDatalist();
-		updateBulkBar();
 		showToast('Изменено типов: ' + count, 'success');
 	}
 
@@ -1065,8 +1065,19 @@
 		closeEditorPanel();
 	});
 
-	searchInput.addEventListener('input', () => renderTable());
-	categoryFilter.addEventListener('change', () => renderTable());
+	function clearSelection() {
+		selectedIndices.clear();
+		if (selectAllCheckbox) selectAllCheckbox.checked = false;
+	}
+
+	searchInput.addEventListener('input', () => {
+		clearSelection();
+		renderTable();
+	});
+	categoryFilter.addEventListener('change', () => {
+		clearSelection();
+		renderTable();
+	});
 
 	typesTable.addEventListener('click', (e) => {
 		const th = e.target.closest('th.sortable');
@@ -1230,6 +1241,7 @@
 			}
 		});
 		massAddModal.classList.add('hidden');
+		clearSelection();
 		renderCategoryFilter();
 		renderTable();
 		renderStats();
@@ -1600,6 +1612,7 @@
 			if (!t) return;
 			fillMissingFields(t);
 		});
+		clearSelection();
 		renderCategoryFilter();
 		renderTable();
 		renderStats();
@@ -1720,6 +1733,7 @@
 		indicesToRemove.forEach(idx => types.splice(idx, 1));
 		duplicateGroups = [];
 		duplicatesModal.classList.add('hidden');
+		clearSelection();
 		renderCategoryFilter();
 		renderTable();
 		renderStats();

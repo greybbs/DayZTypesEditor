@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>TraderPlus Price Config Editor</title>
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Outfit:wght@400;500;600&display=swap" rel="stylesheet">
+	<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+	<div class="app">
+		<header class="header">
+			<div class="header-top">
+				<a href="index.html" class="back-link" title="На главную">←</a>
+				<h1>TraderPlus Price Config</h1>
+			</div>
+			<p class="subtitle">Редактирование TraderPlusPriceConfig.json</p>
+			<div class="toolbar">
+				<label class="btn btn-secondary">
+					<input type="file" id="tpFileInput" accept=".json" hidden> Загрузить JSON
+				</label>
+				<button type="button" id="tpExportBtn" class="btn btn-primary" disabled>Скачать JSON</button>
+				<div class="toolbar-dropdown">
+					<button type="button" id="tpToolsBtn" class="btn btn-outline toolbar-tools-btn">Инструменты ▾</button>
+					<div class="toolbar-dropdown-menu hidden" id="tpToolsMenu">
+						<button type="button" id="tpAddCategoryBtn" class="toolbar-dropdown-item">Добавить категорию</button>
+						<button type="button" id="tpEditCategoryBtn" class="toolbar-dropdown-item">Редактировать категорию</button>
+						<hr class="toolbar-dropdown-sep">
+						<button type="button" id="tpValidateBtn" class="toolbar-dropdown-item">Валидация</button>
+						<button type="button" id="tpDuplicatesBtn" class="toolbar-dropdown-item" disabled>Поиск дубликатов</button>
+						<hr class="toolbar-dropdown-sep">
+						<button type="button" id="tpCompareTypesBtn" class="toolbar-dropdown-item" disabled>Сверка с types</button>
+					</div>
+				</div>
+				<button type="button" id="tpAddProductBtn" class="btn btn-outline">Добавить продукт</button>
+				<button type="button" id="tpMassAddBtn" class="btn btn-outline">Массовое добавление</button>
+				<span class="toolbar-sep"></span>
+				<input type="text" id="tpSearchInput" class="toolbar-input" placeholder="Поиск по classname..." autocomplete="off">
+				<select id="tpCategoryFilter" class="toolbar-select">
+					<option value="">Категория: все</option>
+				</select>
+				<span class="toolbar-stats" id="tpStats">
+					<span id="tpProductCount">0 продуктов</span>
+					<span id="tpSelectedCount" class="hidden">0 выделено</span>
+					<span id="tpErrorCount" class="errors hidden">0 ошибок</span>
+				</span>
+				<a href="https://traderpluswiki.notion.site/87656145052a4edc9a23dc151034e7ea?v=a512ad818e364f17a45fcb631b7bdecd" class="btn btn-outline toolbar-docs-link" target="_blank" rel="noopener noreferrer">TraderPlus Docs</a>
+				<a href="https://discord.gg/xhQhcSNwPf" class="btn btn-outline toolbar-discord-link" target="_blank" rel="noopener noreferrer">Discord</a>
+			</div>
+		</header>
+
+		<main class="main">
+			<section class="main-block">
+				<div class="tp-settings-bar" style="display: none;">
+					<div class="tp-settings-row">
+						<label>Version</label>
+						<input type="text" id="tpVersion" class="tp-setting-input">
+					</div>
+					<div class="tp-settings-row">
+						<label><input type="checkbox" id="tpEnableAutoCalc"> EnableAutoCalculation</label>
+					</div>
+					<div class="tp-settings-row">
+						<label><input type="checkbox" id="tpEnableAutoDestock"> EnableAutoDestockAtRestart</label>
+					</div>
+					<div class="tp-settings-row">
+						<label><input type="checkbox" id="tpEnableDefaultStock"> EnableDefaultTraderStock</label>
+					</div>
+				</div>
+				<div class="table-wrap" id="tpTableWrap">
+					<div class="empty-state" id="tpEmptyState">
+						Загрузите файл TraderPlusPriceConfig.json.
+					</div>
+					<table class="types-table hidden" id="tpTable">
+						<thead>
+							<tr>
+								<th class="th-checkbox"><input type="checkbox" id="tpSelectAll" title="Выбрать все (в фильтре)"></th>
+								<th class="sortable" data-sort="category">Категория</th>
+								<th class="sortable" data-sort="className">Classname</th>
+								<th class="sortable" data-sort="coefficient">coefficient</th>
+								<th class="sortable" data-sort="maxStock">maxstock</th>
+								<th class="sortable" data-sort="tradeQuantity">trade quantity</th>
+								<th class="sortable" data-sort="buyPrice">buy price</th>
+								<th class="sortable" data-sort="sellPrice">sell price</th>
+							</tr>
+						</thead>
+						<tbody id="tpTableBody"></tbody>
+					</table>
+				</div>
+			</section>
+		</main>
+
+		<div class="context-menu hidden" id="tpContextMenu">
+			<button type="button" class="context-menu-item" id="tpContextEdit">Редактировать</button>
+			<button type="button" class="context-menu-item" id="tpContextDelete">Удалить</button>
+			<hr class="toolbar-dropdown-sep" id="tpContextSep" style="display: none;">
+			<button type="button" class="context-menu-item" id="tpContextDeleteSelected" style="display: none;">Удалить выбранные</button>
+			<button type="button" class="context-menu-item" id="tpContextEditSelected" style="display: none;">Изменить выбранные</button>
+		</div>
+
+		<button type="button" id="tpScrollBtn" class="scroll-to-bottom" title="Прокрутить вниз">↓</button>
+
+		<footer class="footer">
+			<span>TTL MODS 2026</span>
+		</footer>
+	</div>
+
+	<!-- Modal: редактирование продукта -->
+	<div class="modal-overlay hidden" id="tpEditorModal">
+		<div class="modal modal-wide">
+			<div class="modal-header">
+				<h2>Редактирование продукта</h2>
+				<button type="button" id="tpCloseEditor" class="btn-icon" title="Закрыть">×</button>
+			</div>
+			<div class="modal-body">
+				<form class="editor-form" id="tpEditorForm">
+					<div class="form-section">
+						<h3>Категория</h3>
+						<select id="tpEditCategory" class="tp-edit-select"></select>
+					</div>
+					<div class="form-section">
+						<h3>Classname</h3>
+						<input type="text" id="tpEditClassName" placeholder="Item_ClassName">
+					</div>
+					<div class="form-section">
+						<h3>Параметры (coefficient, maxstock, trade quantity, buy price, sell price)</h3>
+						<div class="form-grid tp-product-grid">
+							<label>coefficient</label>
+							<input type="text" id="tpEditMinStock" placeholder="-1">
+							<label>maxstock</label>
+							<input type="text" id="tpEditMaxStock" placeholder="-1">
+							<label>trade quantity</label>
+							<input type="text" id="tpEditHealth" placeholder="0 или -1">
+							<label>buy price</label>
+							<input type="text" id="tpEditBuyPrice" placeholder="100">
+							<label>sell price</label>
+							<input type="text" id="tpEditSellPrice" placeholder="-1">
+						</div>
+					</div>
+					<div class="modal-actions">
+						<button type="submit" class="btn btn-primary">Сохранить</button>
+						<button type="button" id="tpCancelEdit" class="btn btn-outline">Отмена</button>
+					</div>
+				</form>
+			</div>
+		</div>
+	</div>
+
+	<!-- Modal: добавить продукт -->
+	<div class="modal-overlay hidden" id="tpAddProductModal">
+		<div class="modal modal-wide">
+			<div class="modal-header">
+				<h2>Добавить продукт</h2>
+				<button type="button" id="tpCloseAddModal" class="btn-icon" title="Закрыть">×</button>
+			</div>
+			<div class="modal-body">
+				<form class="editor-form" id="tpAddProductForm">
+					<div class="form-section">
+						<h3>Категория</h3>
+						<select id="tpAddCategory" class="tp-edit-select"></select>
+					</div>
+					<div class="form-section">
+						<h3>Classname</h3>
+						<input type="text" id="tpAddClassName" placeholder="Item_ClassName">
+					</div>
+					<div class="form-section">
+						<h3>Параметры (coefficient, maxstock, trade quantity, buy price, sell price)</h3>
+						<div class="form-grid tp-product-grid">
+							<label>coefficient</label>
+							<input type="text" id="tpAddMinStock" value="1" placeholder="1">
+							<label>maxstock</label>
+							<input type="text" id="tpAddMaxStock" value="-1" placeholder="-1">
+							<label>trade quantity</label>
+							<input type="text" id="tpAddHealth" value="-1" placeholder="-1">
+							<label>buy price</label>
+							<input type="text" id="tpAddBuyPrice" value="100" placeholder="100">
+							<label>sell price</label>
+							<input type="text" id="tpAddSellPrice" value="-1" placeholder="-1">
+						</div>
+					</div>
+					<div class="modal-actions">
+						<button type="submit" class="btn btn-primary">Добавить</button>
+						<button type="button" id="tpCancelAdd" class="btn btn-outline">Отмена</button>
+					</div>
+				</form>
+			</div>
+		</div>
+	</div>
+
+	<!-- Modal: массовое добавление продуктов -->
+	<div class="modal-overlay hidden" id="tpMassAddModal">
+		<div class="modal modal-wide">
+			<div class="modal-header">
+				<h2>Массовое добавление продуктов</h2>
+				<button type="button" id="tpCloseMassAddModal" class="btn-icon" title="Закрыть">×</button>
+			</div>
+			<div class="modal-body">
+				<p class="mass-add-source-hint">Вставьте список classname — каждый с новой строки будет добавлен как отдельный продукт.</p>
+				<div class="form-section">
+					<label>Категория</label>
+					<select id="tpMassAddCategory" class="tp-edit-select"></select>
+				</div>
+				<div class="form-section">
+					<label>Список classname (по одному на строку)</label>
+					<textarea id="tpMassAddText" rows="10" placeholder="Item_ClassName1&#10;Item_ClassName2&#10;..."></textarea>
+				</div>
+				<div class="form-section">
+					<h3>Параметры по умолчанию (coefficient, maxstock, trade quantity, buy price, sell price)</h3>
+					<div class="form-grid tp-product-grid">
+						<label>coefficient</label>
+						<input type="text" id="tpMassAddMinStock" value="1">
+						<label>maxstock</label>
+						<input type="text" id="tpMassAddMaxStock" value="-1">
+						<label>trade quantity</label>
+						<input type="text" id="tpMassAddHealth" value="-1">
+						<label>buy price</label>
+						<input type="text" id="tpMassAddBuyPrice" value="100">
+						<label>sell price</label>
+						<input type="text" id="tpMassAddSellPrice" value="-1">
+					</div>
+				</div>
+				<div class="modal-actions">
+					<button type="button" id="tpApplyMassAddBtn" class="btn btn-primary">Добавить все</button>
+					<button type="button" id="tpCancelMassAddBtn" class="btn btn-outline">Отмена</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- Modal: массовое изменение выбранных -->
+	<div class="modal-overlay hidden" id="tpBulkEditModal">
+		<div class="modal modal-wide">
+			<div class="modal-header">
+				<h2>Изменить выбранные</h2>
+				<button type="button" id="tpCloseBulkEditModal" class="btn-icon" title="Закрыть">×</button>
+			</div>
+			<div class="modal-body">
+				<p class="bulk-hint">Отметьте поля, которые нужно изменить у выбранных продуктов. Остальные поля не трогаются.</p>
+				<div class="form-section">
+					<h3><label><input type="checkbox" id="tpBulkApplyCategory"> Перенести в категорию</label></h3>
+					<select id="tpBulkEditCategory" class="tp-edit-select"></select>
+				</div>
+				<div class="form-section">
+					<h3>Параметры (coefficient, maxstock, trade quantity, buy price, sell price)</h3>
+					<div class="form-grid tp-product-grid">
+						<label><input type="checkbox" id="tpBulkApplyMinStock"> coefficient</label>
+						<input type="text" id="tpBulkMinStock" placeholder="—">
+						<label><input type="checkbox" id="tpBulkApplyMaxStock"> maxstock</label>
+						<input type="text" id="tpBulkMaxStock" placeholder="—">
+						<label><input type="checkbox" id="tpBulkApplyHealth"> trade quantity</label>
+						<input type="text" id="tpBulkHealth" placeholder="—">
+						<label><input type="checkbox" id="tpBulkApplyBuyPrice"> buy price</label>
+						<input type="text" id="tpBulkBuyPrice" placeholder="—">
+						<label><input type="checkbox" id="tpBulkApplySellPrice"> sell price</label>
+						<input type="text" id="tpBulkSellPrice" placeholder="—">
+					</div>
+				</div>
+				<div class="modal-actions">
+					<button type="button" id="tpApplyBulkEditBtn" class="btn btn-primary">Применить</button>
+					<button type="button" id="tpCancelBulkEditBtn" class="btn btn-outline">Отмена</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- Modal: редактирование категории -->
+	<div class="modal-overlay hidden" id="tpEditCategoryModal">
+		<div class="modal">
+			<div class="modal-header">
+				<h2>Редактировать категорию</h2>
+				<button type="button" id="tpCloseEditCatModal" class="btn-icon" title="Закрыть">×</button>
+			</div>
+			<div class="modal-body">
+				<form id="tpEditCategoryForm">
+					<div class="form-section">
+						<label>Текущее название</label>
+						<select id="tpEditCatSelect" class="tp-edit-select"></select>
+					</div>
+					<div class="form-section">
+						<label>Новое название</label>
+						<input type="text" id="tpEditCatNewName" placeholder="Новое название">
+					</div>
+					<div class="modal-actions">
+						<button type="submit" class="btn btn-primary">Сохранить</button>
+						<button type="button" id="tpCancelEditCat" class="btn btn-outline">Отмена</button>
+					</div>
+				</form>
+			</div>
+		</div>
+	</div>
+
+	<!-- Modal: добавить категорию -->
+	<div class="modal-overlay hidden" id="tpAddCategoryModal">
+		<div class="modal">
+			<div class="modal-header">
+				<h2>Добавить категорию</h2>
+				<button type="button" id="tpCloseAddCatModal" class="btn-icon" title="Закрыть">×</button>
+			</div>
+			<div class="modal-body">
+				<form id="tpAddCategoryForm">
+					<div class="form-section">
+						<label>Название категории</label>
+						<input type="text" id="tpAddCategoryName" placeholder="Название">
+					</div>
+					<div class="modal-actions">
+						<button type="submit" class="btn btn-primary">Добавить</button>
+						<button type="button" id="tpCancelAddCat" class="btn btn-outline">Отмена</button>
+					</div>
+				</form>
+			</div>
+		</div>
+	</div>
+
+	<!-- Modal: дубликаты по classname -->
+	<div class="modal-overlay hidden" id="tpDuplicatesModal">
+		<div class="modal modal-wide">
+			<div class="modal-header">
+				<h2>Дубликаты по classname</h2>
+				<button type="button" id="tpCloseDuplicatesModal" class="btn-icon" title="Закрыть">×</button>
+			</div>
+			<div class="modal-body">
+				<p class="duplicates-hint" id="tpDuplicatesHint">Выберите для каждой группы запись «Оставить», остальные можно удалить.</p>
+				<div id="tpDuplicatesList"></div>
+				<div class="modal-actions">
+					<button type="button" id="tpApplyDuplicatesBtn" class="btn btn-primary" style="display: none;">Удалить выбранные дубликаты</button>
+					<button type="button" id="tpCloseDuplicatesBtn" class="btn btn-outline">Закрыть</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- Modal: сверка с types -->
+	<div class="modal-overlay hidden" id="tpCompareTypesModal">
+		<div class="modal modal-wide">
+			<div class="modal-header">
+				<h2>Сверка с types</h2>
+				<button type="button" id="tpCloseCompareTypesModal" class="btn-icon" title="Закрыть">×</button>
+			</div>
+			<div class="modal-body">
+				<div class="form-section">
+					<label>Файл types.xml</label>
+					<label class="btn btn-outline">
+						<input type="file" id="tpCompareTypesFile" accept=".xml" hidden> Выбрать types.xml
+					</label>
+					<span id="tpCompareTypesFileName" class="hint" style="margin-left: 0.5rem;"></span>
+				</div>
+				<div class="form-section">
+					<h3>Вариант проверки</h3>
+					<div class="compare-types-options">
+						<label><input type="radio" name="tpCompareVariant" value="1" checked> Товары TraderPlus, которых нет в types</label>
+						<label><input type="radio" name="tpCompareVariant" value="2"> Типы из types (nominal > 0), которых нет в TraderPlus</label>
+					</div>
+				</div>
+				<div class="form-section">
+					<button type="button" id="tpRunCompareBtn" class="btn btn-primary">Выполнить проверку</button>
+				</div>
+				<div class="form-section">
+					<label>Результат (classname — каждый с новой строки)</label>
+					<textarea id="tpCompareResult" rows="12" readonly placeholder="Сначала выберите types.xml и нажмите «Выполнить проверку»"></textarea>
+					<button type="button" id="tpCopyCompareResult" class="btn btn-outline btn-small" style="margin-top: 0.5rem;">Скопировать</button>
+				</div>
+				<div class="modal-actions">
+					<button type="button" id="tpCloseCompareTypesBtn" class="btn btn-outline">Закрыть</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- Modal: ошибки валидации -->
+	<div class="modal-overlay hidden" id="tpErrorsModal">
+		<div class="modal modal-wide">
+			<div class="modal-header">
+				<h2>Ошибки валидации</h2>
+				<button type="button" id="tpCloseErrorsModal" class="btn-icon" title="Закрыть">×</button>
+			</div>
+			<div class="modal-body">
+				<p class="errors-hint" id="tpErrorsHint"></p>
+				<div class="errors-list" id="tpErrorsList"></div>
+				<div class="modal-actions">
+					<button type="button" id="tpCloseErrorsBtn" class="btn btn-outline">Закрыть</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- Modal: предупреждение о разработке -->
+	<div class="modal-overlay hidden" id="tpWarningModal">
+		<div class="modal">
+			<div class="modal-header">
+				<h2>Внимание — приложение в разработке</h2>
+				<button type="button" id="tpCloseWarningModal" class="btn-icon" title="Закрыть">×</button>
+			</div>
+			<div class="modal-body">
+				<p>Этот редактор всё ещё активно разрабатывается. Перед любыми изменениями настоятельно рекомендуем сделать <strong>резервную копию вашего файла TraderPlusPriceConfig.json</strong>.</p>
+				<p>Если у вас есть вопросы, пожелания или вы нашли ошибку — пожалуйста, напишите нам в Discord.</p>
+				<div class="modal-actions">
+					<button type="button" id="tpWarningOkBtn" class="btn btn-primary">Принять</button>
+					<a href="https://discord.gg/xhQhcSNwPf" target="_blank" rel="noopener noreferrer" class="btn btn-outline">Открыть Discord</a>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<script src="traderplus.js"></script>
+</body>
+</html>
