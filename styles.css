@@ -128,8 +128,18 @@ body {
 	margin-left: auto;
 }
 
-.toolbar-discord-link {
-	margin-left: 0;
+.toolbar-checkbox {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.4rem;
+	color: var(--text-muted);
+	font-size: 0.9rem;
+	cursor: pointer;
+	user-select: none;
+}
+
+.toolbar-checkbox input[type="checkbox"] {
+	accent-color: var(--accent);
 }
 
 .toolbar-sep {

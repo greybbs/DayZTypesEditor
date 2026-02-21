@@ -30,6 +30,8 @@
 	const validateBtn = $('validateBtn');
 	const searchInput = $('searchInput');
 	const categoryFilter = $('categoryFilter');
+	const delootFilter = $('delootFilter');
+	const nominalPositiveFilter = $('nominalPositiveFilter');
 	const tableBody = $('tableBody');
 	const typesTable = $('typesTable');
 	const tableWrap = $('tableWrap');
@@ -61,6 +63,12 @@
 	const applyBulkBtn = $('applyBulkBtn');
 	const contextMenu = $('contextMenu');
 	const contextRemoveSpawn = $('contextRemoveSpawn');
+	const contextSpawnX2 = $('contextSpawnX2');
+	const contextSpawnX3 = $('contextSpawnX3');
+	const contextSpawnX4 = $('contextSpawnX4');
+	const contextSpawnDiv2 = $('contextSpawnDiv2');
+	const contextSpawnDiv3 = $('contextSpawnDiv3');
+	const contextSpawnDiv4 = $('contextSpawnDiv4');
 	const contextDelete = $('contextDelete');
 	const contextBulkEdit = $('contextBulkEdit');
 	const massAddOpenBtn = $('massAddOpenBtn');
@@ -584,11 +592,18 @@
 	function getFilteredTypes() {
 		const q = searchInput.value.trim().toLowerCase();
 		const cat = categoryFilter.value;
+		const onlyDeloot = delootFilter && delootFilter.checked;
+		const onlyNominalPositive = nominalPositiveFilter && nominalPositiveFilter.checked;
 		let result = types
 			.map((t, i) => ({ t, i }))
 			.filter(({ t }) => {
 				if (q && !t.name.toLowerCase().includes(q)) return false;
 				if (cat && t.category !== cat) return false;
+				if (onlyDeloot && (!t.flags || t.flags.deloot !== '1')) return false;
+				if (onlyNominalPositive) {
+					const nominal = parseInt(String(t.nominal ?? '').trim(), 10);
+					if (isNaN(nominal) || nominal <= 0) return false;
+				}
 				return true;
 			});
 		if (sortCol) {
@@ -757,9 +772,34 @@
 		showToast('Удалено: ' + sorted.length, 'success');
 	}
 
+	function getContextIndices() {
+		if (selectedIndices.size > 0) return selectedIndices;
+		if (contextMenuTargetIndex >= 0) return new Set([contextMenuTargetIndex]);
+		return new Set();
+	}
+
+	function scaleSpawn(indices, factor) {
+		let changed = 0;
+		indices.forEach(idx => {
+			const t = types[idx];
+			if (!t) return;
+			const nominal = parseInt(String(t.nominal ?? '').trim(), 10);
+			const min = parseInt(String(t.min ?? '').trim(), 10);
+			const baseNominal = isNaN(nominal) ? 0 : nominal;
+			const baseMin = isNaN(min) ? 0 : min;
+			const nextNominal = Math.max(0, Math.floor(baseNominal * factor));
+			let nextMin = Math.max(0, Math.floor(baseMin * factor));
+			if (factor < 1 && baseMin > 0 && nextMin < 1) nextMin = 1;
+			t.nominal = String(nextNominal);
+			t.min = String(nextMin);
+			changed++;
+		});
+		return changed;
+	}
+
 	contextRemoveSpawn.addEventListener('click', () => {
 		hideContextMenu();
-		const indices = selectedIndices.size > 0 ? selectedIndices : (contextMenuTargetIndex >= 0 ? new Set([contextMenuTargetIndex]) : new Set());
+		const indices = getContextIndices();
 		indices.forEach(idx => {
 			const t = types[idx];
 			if (t) { t.min = '0'; t.nominal = '0'; }
@@ -768,6 +808,25 @@
 		renderTable();
 		renderStats();
 		if (indices.size > 0) showToast('Убрано из спавна: ' + indices.size, 'success');
+	});
+	[
+		{ btn: contextSpawnX2, factor: 2, label: '×2' },
+		{ btn: contextSpawnX3, factor: 3, label: '×3' },
+		{ btn: contextSpawnX4, factor: 4, label: '×4' },
+		{ btn: contextSpawnDiv2, factor: 0.5, label: '÷2' },
+		{ btn: contextSpawnDiv3, factor: 1 / 3, label: '÷3' },
+		{ btn: contextSpawnDiv4, factor: 0.25, label: '÷4' }
+	].forEach(({ btn, factor, label }) => {
+		if (!btn) return;
+		btn.addEventListener('click', () => {
+			hideContextMenu();
+			const indices = getContextIndices();
+			const changed = scaleSpawn(indices, factor);
+			clearSelection();
+			renderTable();
+			renderStats();
+			if (changed > 0) showToast('Спавн изменён ' + label + ': ' + changed, 'success');
+		});
 	});
 	contextDelete.addEventListener('click', () => {
 		hideContextMenu();
@@ -1078,6 +1137,18 @@
 		clearSelection();
 		renderTable();
 	});
+	if (delootFilter) {
+		delootFilter.addEventListener('change', () => {
+			clearSelection();
+			renderTable();
+		});
+	}
+	if (nominalPositiveFilter) {
+		nominalPositiveFilter.addEventListener('change', () => {
+			clearSelection();
+			renderTable();
+		});
+	}
 
 	typesTable.addEventListener('click', (e) => {
 		const th = e.target.closest('th.sortable');

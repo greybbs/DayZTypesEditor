@@ -43,6 +43,12 @@
 				<select id="categoryFilter" class="toolbar-select">
 					<option value="">Категория: все</option>
 				</select>
+				<label class="toolbar-checkbox">
+					<input type="checkbox" id="delootFilter"> Deloot
+				</label>
+				<label class="toolbar-checkbox">
+					<input type="checkbox" id="nominalPositiveFilter"> nominal > 0
+				</label>
 				<span class="toolbar-stats" id="stats">
 					<span id="typeCount">0 предметов</span>
 					<span id="selectedCount" class="hidden">0 выделено</span>
@@ -86,6 +92,12 @@
 		<!-- Контекстное меню -->
 		<div class="context-menu hidden" id="contextMenu">
 			<button type="button" class="context-menu-item" id="contextRemoveSpawn">Убрать из спавна</button>
+			<button type="button" class="context-menu-item" id="contextSpawnX2">Увеличить ×2</button>
+			<button type="button" class="context-menu-item" id="contextSpawnX3">Увеличить ×3</button>
+			<button type="button" class="context-menu-item" id="contextSpawnX4">Увеличить ×4</button>
+			<button type="button" class="context-menu-item" id="contextSpawnDiv2">Уменьшить ÷2</button>
+			<button type="button" class="context-menu-item" id="contextSpawnDiv3">Уменьшить ÷3</button>
+			<button type="button" class="context-menu-item" id="contextSpawnDiv4">Уменьшить ÷4</button>
 			<button type="button" class="context-menu-item" id="contextDelete">Удалить</button>
 			<hr class="toolbar-dropdown-sep" id="contextSep" style="display: none;">
 			<button type="button" class="context-menu-item" id="contextBulkEdit" style="display: none;">Массовое изменение</button>
