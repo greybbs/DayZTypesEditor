@@ -79,7 +79,30 @@ body {
 .header-top {
 	display: flex;
 	align-items: center;
+	justify-content: space-between;
+	gap: 0.75rem;
+}
+
+.header-title-group {
+	display: flex;
+	align-items: center;
 	gap: 0.5rem;
+	min-width: 0;
+}
+
+.language-select {
+	padding: 0.35rem 0.5rem;
+	background: var(--bg-input);
+	border: 1px solid var(--border);
+	border-radius: var(--radius);
+	color: var(--text);
+	font-family: var(--font-ui);
+	font-size: 0.85rem;
+}
+
+.language-select:focus {
+	outline: none;
+	border-color: var(--accent);
 }
 
 .header-top h1 {

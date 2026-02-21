@@ -13,12 +13,18 @@
 	<div class="app">
 		<header class="header">
 			<div class="header-top">
-				<a href="index.html" class="back-link" title="На главную">←</a>
-				<h1>DayZ Types Editor</h1>
+				<div class="header-title-group">
+					<a href="index.html" class="back-link" title="На главную">←</a>
+					<h1>DayZ Types Editor</h1>
+				</div>
+				<select id="languageSelect" class="language-select" title="Язык / Language" aria-label="Language">
+					<option value="ru">RU</option>
+					<option value="en">EN</option>
+				</select>
 			</div>
 			<p class="subtitle">Настройка и валидация types.xml</p>
 			<div class="toolbar">
-				<label class="btn btn-secondary">
+				<label class="btn btn-secondary" id="uploadXmlLabel">
 					<input type="file" id="fileInput" accept=".xml" hidden> Загрузить XML
 				</label>
 				<button type="button" id="exportBtn" class="btn btn-primary" disabled>Скачать types.xml</button>
@@ -140,7 +146,7 @@
 				<p class="mass-add-source-hint">Загрузите .txt с Config-Type или вставьте список class name (по одному на строку).</p>
 				<div class="mass-add-source-options">
 					<div class="form-section">
-						<label class="btn btn-outline">
+						<label class="btn btn-outline" id="massAddSourceFileLabel">
 							<input type="file" id="massAddSourceFile" accept=".txt" hidden> Загрузить из файла
 						</label>
 					</div>

@@ -95,6 +95,280 @@
 	const warningModal = $('warningModal');
 	const warningOkBtn = $('warningOkBtn');
 	const closeWarningModal = $('closeWarningModal');
+	const languageSelect = $('languageSelect');
+
+	const LANGUAGE_STORAGE_KEY = 'typesEditorLanguage';
+	let currentLanguage = 'ru';
+	const I18N = {
+		ru: {
+			subtitle: 'Настройка и валидация types.xml',
+			backHomeTitle: 'На главную',
+			uploadXml: 'Загрузить XML',
+			downloadXml: 'Скачать types.xml',
+			tools: 'Инструменты ▾',
+			importFromXml: 'Добавить из XML',
+			importFromXmlTitleDisabled: 'Сначала загрузите основной файл',
+			validate: 'Валидация',
+			findDuplicates: 'Поиск дубликатов',
+			compareVanilla: 'Сравнить с Vanilla',
+			massAdd: 'Массовое добавление',
+			addItem: 'Добавить предмет',
+			searchPlaceholder: 'Поиск по type name...',
+			categoryAll: 'Категория: все',
+			itemsCount: 'предметов',
+			selectedCount: 'выделено',
+			errorsCount: 'ошибок',
+			emptyState: 'Загрузите файл types.xml.',
+			selectAllTitle: 'Выбрать все (в фильтре)',
+			contextRemoveSpawn: 'Убрать из спавна',
+			contextScaleUp: 'Увеличить',
+			contextScaleDown: 'Уменьшить',
+			contextDelete: 'Удалить',
+			contextBulkEdit: 'Массовое изменение',
+			contextClearSelection: 'Снять выделение',
+			scrollDownTitle: 'Прокрутить вниз',
+			scrollUpTitle: 'Прокрутить вверх',
+			toastDeleted: 'Удалено: {count}',
+			toastRemovedFromSpawn: 'Убрано из спавна: {count}',
+			toastSpawnChanged: 'Спавн изменён {label}: {count}',
+			typeCountFiltered: '{filtered} из {total} типов',
+			noLoadedTypes: 'Нет загруженных типов.',
+			warningTitle: 'Внимание — приложение в разработке',
+			warningAccept: 'Принять',
+			warningOpenDiscord: 'Открыть Discord',
+			massAddSourceTitle: 'Массовое добавление — источник',
+			massAddSourceHint: 'Загрузите .txt с Config-Type или вставьте список class name (по одному на строку).',
+			massAddSourceUploadFile: 'Загрузить из файла',
+			massAddSourcePasteLabel: 'Вставить список class name (по одному на строку)',
+			massAddSourcePastePlaceholder: 'Item_ClassName1\nItem_ClassName2\n...',
+			massAddSourceContinue: 'Продолжить',
+			cancel: 'Отмена',
+			massAddTitle: 'Массовое добавление предметов',
+			massAddApply: 'Добавить предметы',
+			massAddShowList: 'Показать список',
+			massAddListTitle: 'Список добавляемых предметов',
+			singleAddTitle: 'Добавить предмет',
+			singleAddApply: 'Добавить',
+			bulkTitle: 'Массовое изменение',
+			bulkApply: 'Применить к выбранным',
+			editorTitle: 'Редактирование типа',
+			save: 'Сохранить',
+			revert: 'Отменить',
+			errorsTitle: 'Ошибки валидации',
+			fixAllErrors: 'Исправить все',
+			close: 'Закрыть',
+			duplicatesTitle: 'Дубликаты по type name',
+			duplicatesApply: 'Удалить выбранные дубликаты',
+			warningBody1: 'Этот редактор типов всё ещё активно разрабатывается. Перед любыми изменениями настоятельно рекомендуем сделать резервную копию вашего файла types.xml.',
+			warningBody2: 'Если у вас есть вопросы, пожелания или вы нашли ошибку — пожалуйста, напишите нам в Discord.',
+			singleAddHint: 'Вставьте Config-Type: ... или просто class name (один или несколько на строку). Будет добавлен тип с настройками по умолчанию.',
+			singleAddPlaceholder: 'Config-Type: Kuvalda_RGN_Grenade\nили просто:\nItem_ClassName'
+		},
+		en: {
+			subtitle: 'Configure and validate types.xml',
+			backHomeTitle: 'Back to home',
+			uploadXml: 'Upload XML',
+			downloadXml: 'Download types.xml',
+			tools: 'Tools ▾',
+			importFromXml: 'Add from XML',
+			importFromXmlTitleDisabled: 'Load the main file first',
+			validate: 'Validation',
+			findDuplicates: 'Find duplicates',
+			compareVanilla: 'Compare with Vanilla',
+			massAdd: 'Mass add',
+			addItem: 'Add item',
+			searchPlaceholder: 'Search by type name...',
+			categoryAll: 'Category: all',
+			itemsCount: 'items',
+			selectedCount: 'selected',
+			errorsCount: 'errors',
+			emptyState: 'Load a types.xml file.',
+			selectAllTitle: 'Select all (in filter)',
+			contextRemoveSpawn: 'Remove from spawn',
+			contextScaleUp: 'Increase',
+			contextScaleDown: 'Decrease',
+			contextDelete: 'Delete',
+			contextBulkEdit: 'Bulk edit',
+			contextClearSelection: 'Clear selection',
+			scrollDownTitle: 'Scroll down',
+			scrollUpTitle: 'Scroll up',
+			toastDeleted: 'Deleted: {count}',
+			toastRemovedFromSpawn: 'Removed from spawn: {count}',
+			toastSpawnChanged: 'Spawn updated {label}: {count}',
+			typeCountFiltered: '{filtered} of {total} types',
+			noLoadedTypes: 'No loaded types.',
+			warningTitle: 'Warning — app in development',
+			warningAccept: 'Accept',
+			warningOpenDiscord: 'Open Discord',
+			massAddSourceTitle: 'Mass Add — Source',
+			massAddSourceHint: 'Upload a .txt with Config-Type or paste a class name list (one per line).',
+			massAddSourceUploadFile: 'Upload from file',
+			massAddSourcePasteLabel: 'Paste class name list (one per line)',
+			massAddSourcePastePlaceholder: 'Item_ClassName1\nItem_ClassName2\n...',
+			massAddSourceContinue: 'Continue',
+			cancel: 'Cancel',
+			massAddTitle: 'Mass add items',
+			massAddApply: 'Add items',
+			massAddShowList: 'Show list',
+			massAddListTitle: 'Items to add',
+			singleAddTitle: 'Add item',
+			singleAddApply: 'Add',
+			bulkTitle: 'Bulk edit',
+			bulkApply: 'Apply to selected',
+			editorTitle: 'Type editor',
+			save: 'Save',
+			revert: 'Revert',
+			errorsTitle: 'Validation errors',
+			fixAllErrors: 'Fix all',
+			close: 'Close',
+			duplicatesTitle: 'Duplicates by type name',
+			duplicatesApply: 'Delete selected duplicates',
+			warningBody1: 'This type editor is still under active development. Before making any changes, we strongly recommend creating a backup of your types.xml file.',
+			warningBody2: 'If you have questions, suggestions, or found a bug, please contact us on Discord.',
+			singleAddHint: 'Paste Config-Type: ... or just class name (one or more per line). A type with default settings will be added.',
+			singleAddPlaceholder: 'Config-Type: Kuvalda_RGN_Grenade\nor simply:\nItem_ClassName'
+		}
+	};
+
+	function t(key, vars) {
+		const langPack = I18N[currentLanguage] || I18N.ru;
+		let text = langPack[key] || I18N.ru[key] || key;
+		if (vars) {
+			Object.keys(vars).forEach((name) => {
+				text = text.replace('{' + name + '}', String(vars[name]));
+			});
+		}
+		return text;
+	}
+
+	function setNodeTextById(id, text) {
+		const el = $(id);
+		if (!el) return;
+		el.textContent = text;
+	}
+
+	function setSelectorText(selector, text) {
+		const el = document.querySelector(selector);
+		if (!el) return;
+		el.textContent = text;
+	}
+
+	function setControlText(id, text) {
+		const el = $(id);
+		if (!el) return;
+		const textNodes = Array.from(el.childNodes).filter(node => node.nodeType === Node.TEXT_NODE);
+		let textNode = null;
+		for (let i = textNodes.length - 1; i >= 0; i--) {
+			if ((textNodes[i].nodeValue || '').trim().length > 0) {
+				textNode = textNodes[i];
+				break;
+			}
+		}
+		if (!textNode && textNodes.length > 0) textNode = textNodes[textNodes.length - 1];
+		if (textNode) {
+			textNode.nodeValue = ' ' + text;
+		} else {
+			el.appendChild(document.createTextNode(' ' + text));
+		}
+	}
+
+	function applyStaticTranslations() {
+		document.documentElement.lang = currentLanguage;
+		const subtitle = document.querySelector('.subtitle');
+		if (subtitle) subtitle.textContent = t('subtitle');
+		const backLink = document.querySelector('.back-link');
+		if (backLink) backLink.title = t('backHomeTitle');
+		if (languageSelect) languageSelect.title = currentLanguage === 'ru' ? 'Язык / Language' : 'Language / Язык';
+		setControlText('uploadXmlLabel', t('uploadXml'));
+		setNodeTextById('exportBtn', t('downloadXml'));
+		setNodeTextById('toolsBtn', t('tools'));
+		setControlText('importXmlLabel', t('importFromXml'));
+		setNodeTextById('validateBtn', t('validate'));
+		setNodeTextById('duplicatesBtn', t('findDuplicates'));
+		setControlText('compareVanillaLabel', t('compareVanilla'));
+		setNodeTextById('massAddOpenBtn', t('massAdd'));
+		setNodeTextById('addSingleTypeBtn', t('addItem'));
+		if (searchInput) searchInput.placeholder = t('searchPlaceholder');
+		if (emptyState) emptyState.textContent = t('emptyState');
+		if (selectAllCheckbox) selectAllCheckbox.title = t('selectAllTitle');
+		if (categoryFilter && categoryFilter.options && categoryFilter.options.length > 0) {
+			categoryFilter.options[0].textContent = t('categoryAll');
+		}
+		if (typeCount) typeCount.textContent = '0 ' + t('itemsCount');
+		const selectedCountEl = $('selectedCount');
+		if (selectedCountEl) selectedCountEl.textContent = '0 ' + t('selectedCount');
+		if (errorCount) errorCount.textContent = '0 ' + t('errorsCount');
+		setNodeTextById('contextRemoveSpawn', t('contextRemoveSpawn'));
+		setNodeTextById('contextDelete', t('contextDelete'));
+		setNodeTextById('contextBulkEdit', t('contextBulkEdit'));
+		setNodeTextById('contextClearSelection', t('contextClearSelection'));
+		setNodeTextById('contextSpawnX2', t('contextScaleUp') + ' ×2');
+		setNodeTextById('contextSpawnX3', t('contextScaleUp') + ' ×3');
+		setNodeTextById('contextSpawnX4', t('contextScaleUp') + ' ×4');
+		setNodeTextById('contextSpawnDiv2', t('contextScaleDown') + ' ÷2');
+		setNodeTextById('contextSpawnDiv3', t('contextScaleDown') + ' ÷3');
+		setNodeTextById('contextSpawnDiv4', t('contextScaleDown') + ' ÷4');
+		setSelectorText('#warningModal h2', t('warningTitle'));
+		setSelectorText('#warningModal .modal-body p:nth-of-type(1)', t('warningBody1'));
+		setSelectorText('#warningModal .modal-body p:nth-of-type(2)', t('warningBody2'));
+		setNodeTextById('warningOkBtn', t('warningAccept'));
+		setSelectorText('#warningModal .modal-actions a', t('warningOpenDiscord'));
+		setSelectorText('#massAddSourceModal h2', t('massAddSourceTitle'));
+		setSelectorText('#massAddSourceModal .mass-add-source-hint', t('massAddSourceHint'));
+		setControlText('massAddSourceFileLabel', t('massAddSourceUploadFile'));
+		setSelectorText('#massAddSourceModal .form-section label:not(.btn)', t('massAddSourcePasteLabel'));
+		const massAddSourcePaste = $('massAddSourcePaste');
+		if (massAddSourcePaste) massAddSourcePaste.placeholder = t('massAddSourcePastePlaceholder');
+		setNodeTextById('massAddSourceContinueBtn', t('massAddSourceContinue'));
+		setNodeTextById('massAddSourceCancelBtn', t('cancel'));
+		setSelectorText('#massAddModal h2', t('massAddTitle'));
+		setNodeTextById('applyMassAddBtn', t('massAddApply'));
+		setNodeTextById('showMassAddNamesBtn', t('massAddShowList'));
+		setNodeTextById('cancelMassAddBtn', t('cancel'));
+		setSelectorText('#massAddNamesModal h2', t('massAddListTitle'));
+		setSelectorText('#singleAddModal h2', t('singleAddTitle'));
+		setSelectorText('#singleAddModal .single-add-hint', t('singleAddHint'));
+		if (singleAddText) singleAddText.placeholder = t('singleAddPlaceholder');
+		setNodeTextById('applySingleAddBtn', t('singleAddApply'));
+		setNodeTextById('cancelSingleAddBtn', t('cancel'));
+		setSelectorText('#bulkModal h2', t('bulkTitle'));
+		setNodeTextById('applyBulkBtn', t('bulkApply'));
+		setNodeTextById('cancelBulkBtn', t('cancel'));
+		setSelectorText('#editorModal h2', t('editorTitle'));
+		const saveBtn = editorForm ? editorForm.querySelector('button[type="submit"]') : null;
+		if (saveBtn) saveBtn.textContent = t('save');
+		setNodeTextById('revertBtn', t('revert'));
+		setSelectorText('#errorsModal h2', t('errorsTitle'));
+		setNodeTextById('fixAllErrorsBtn', t('fixAllErrors'));
+		setNodeTextById('closeErrorsBtn', t('close'));
+		setSelectorText('#duplicatesModal h2', t('duplicatesTitle'));
+		setNodeTextById('applyDuplicatesBtn', t('duplicatesApply'));
+		setNodeTextById('closeDuplicatesBtn', t('close'));
+		if (importXmlInput) {
+			const label = $('importXmlLabel');
+			if (label) label.title = t('importFromXmlTitleDisabled');
+		}
+	}
+
+	function initLanguage() {
+		const saved = localStorage.getItem(LANGUAGE_STORAGE_KEY);
+		if (saved === 'ru' || saved === 'en') currentLanguage = saved;
+		if (languageSelect) {
+			languageSelect.value = currentLanguage;
+			languageSelect.addEventListener('change', () => {
+				const next = languageSelect.value === 'en' ? 'en' : 'ru';
+				currentLanguage = next;
+				localStorage.setItem(LANGUAGE_STORAGE_KEY, currentLanguage);
+				applyStaticTranslations();
+				renderCategoryFilter();
+				renderTable();
+				renderStats();
+				updateBulkBar();
+				updateScrollButton();
+			});
+		}
+		applyStaticTranslations();
+	}
 
 	const numberFields = [
 		'fieldNominal', 'fieldLifetime', 'fieldRestock', 'fieldMin',
@@ -575,7 +849,7 @@
 
 	function renderCategoryFilter() {
 		const savedCat = categoryFilter.value;
-		const opts = ['<option value="">Категория: все</option>'];
+		const opts = ['<option value="">' + escapeHtml(t('categoryAll')) + '</option>'];
 		Array.from(categoriesSet).sort().forEach(c => {
 			opts.push(`<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`);
 		});
@@ -641,7 +915,7 @@
 		}
 		const selCount = $('selectedCount');
 		if (selCount) {
-			selCount.textContent = selectedIndices.size + ' выделено';
+			selCount.textContent = selectedIndices.size + ' ' + t('selectedCount');
 			selCount.classList.toggle('hidden', selectedIndices.size === 0);
 		}
 	}
@@ -719,7 +993,7 @@
 
 	function renderTable() {
 		const filtered = getFilteredTypes();
-		typeCount.textContent = `${filtered.length} из ${types.length} типов`;
+		typeCount.textContent = t('typeCountFiltered', { filtered: filtered.length, total: types.length });
 
 		if (types.length === 0) {
 			emptyState.style.display = 'block';
@@ -769,7 +1043,7 @@
 		renderStats();
 		fillCategoryDatalist();
 		updateBulkBar();
-		showToast('Удалено: ' + sorted.length, 'success');
+		showToast(t('toastDeleted', { count: sorted.length }), 'success');
 	}
 
 	function getContextIndices() {
@@ -807,7 +1081,7 @@
 		clearSelection();
 		renderTable();
 		renderStats();
-		if (indices.size > 0) showToast('Убрано из спавна: ' + indices.size, 'success');
+		if (indices.size > 0) showToast(t('toastRemovedFromSpawn', { count: indices.size }), 'success');
 	});
 	[
 		{ btn: contextSpawnX2, factor: 2, label: '×2' },
@@ -825,7 +1099,7 @@
 			clearSelection();
 			renderTable();
 			renderStats();
-			if (changed > 0) showToast('Спавн изменён ' + label + ': ' + changed, 'success');
+			if (changed > 0) showToast(t('toastSpawnChanged', { label, count: changed }), 'success');
 		});
 	});
 	contextDelete.addEventListener('click', () => {
@@ -975,7 +1249,7 @@
 	function renderStats() {
 		let errTotal = 0;
 		types.forEach(t => { errTotal += validateType(t).length; });
-		errorCount.textContent = errTotal + ' ошибок';
+		errorCount.textContent = errTotal + ' ' + t('errorsCount');
 		errorCount.classList.toggle('hidden', errTotal === 0);
 	}
 
@@ -1369,7 +1643,7 @@
 		const pageAtBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 10;
 		const atBottom = tableAtBottom || pageAtBottom;
 		scrollToBottomBtn.textContent = atBottom ? '↑' : '↓';
-		scrollToBottomBtn.title = atBottom ? 'Прокрутить вверх' : 'Прокрутить вниз';
+		scrollToBottomBtn.title = atBottom ? t('scrollUpTitle') : t('scrollDownTitle');
 	}
 	if (scrollToBottomBtn) {
 		scrollToBottomBtn.addEventListener('click', (e) => {
@@ -1693,7 +1967,7 @@
 
 	validateBtn.addEventListener('click', () => {
 		if (!types.length) {
-			showToast('Нет загруженных типов.', 'error');
+			showToast(t('noLoadedTypes'), 'error');
 			return;
 		}
 		openErrorsModal();
@@ -1843,6 +2117,8 @@
 			list.appendChild(opt);
 		});
 	}
+
+	initLanguage();
 
 	// Показать предупреждение при загрузке страницы
 	if (warningModal) {
